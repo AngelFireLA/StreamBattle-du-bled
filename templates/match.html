@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Tournament</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <style>
+    body {
+      background: linear-gradient(to right, skyblue, blue);
+    }
+    .image-container {
+      margin: 50px;
+      border: 2px solid transparent;
+      transition: all .3s ease;
+    }
+    .image-container:hover {
+      border-color: gold;
+    }
+    img {
+      width: 300px;
+      height: 300px;
+      object-fit: cover;
+      cursor: pointer;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, .5);
+    }
+    .container {
+      display: flex;
+      justify-content: space-evenly;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Image Tournament</h1>
+  <h2>{{ round_name }}</h2>
+  <h3>Match {{ round_progress }}</h3>
+  <div class="container">
+    {% for image in pair %}
+      <div class="image-container">
+        <form method="POST" class="image-form">
+          <input type="hidden" name="image" value="{{ image }}">
+          <img src="{{ url_for('static', filename='images/' + image) }}" onclick="this.parentElement.submit()">
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>
