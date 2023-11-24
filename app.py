@@ -13,6 +13,7 @@ TOTAL_IMAGES = None
 round_number = None
 match_number = 0
 
+@app.route('/', methods=['GET'])
 @app.route('/start', methods=['GET'])
 def start():
     global ROUND, WINNERS, TOTAL_IMAGES, round_number
