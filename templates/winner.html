@@ -5,10 +5,16 @@
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
     img {
-      width: 600px;
-      height: 600px;
+      width: 300px;
+      height: 300px;
       object-fit: cover;
       margin: 30px auto;
+    }
+    body {
+      background: linear-gradient(to right, skyblue, blue);
+    }
+    .ranking-table {
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -16,6 +22,25 @@
   <div class="container">
     <h1>And the winner is...</h1>
     <img src="{{ url_for('static', filename='images/' + image) }}" class="mx-auto d-block">
+    <h2>Rankings</h2>
+    <table class="table ranking-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Image</th>
+          <th>Download</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in rankings %}
+        <tr>
+          <td>{{ entry.rank }}</td>
+          <td><img src="{{ url_for('static', filename='images/' + entry.file) }}" width="100" height="100"></td>
+          <td><a href="{{ url_for('download_rank', rank=entry.rank) }}" class="btn btn-primary">Download Rank {{ entry.rank }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
     <a href="{{ url_for('index') }}" class="btn btn-primary d-block mx-auto mt-4">Return Home</a>
   </div>
 </body>

@@ -1,0 +1,301 @@
+{
+    "tournament_id": 673276,
+    "date_created": "2024-01-26-20-01-40",
+    "status": "completed",
+    "type": "single-knockout",
+    "participants": [
+        "image-15.jpg",
+        "image-2.jpg",
+        "2024-01-26_16-21-02_UTC.jpg",
+        "2024-01-19_20-33-44_UTC_3.jpg",
+        "image-12.jpg",
+        "2024-01-19_20-33-44_UTC_2.jpg",
+        "image-4.jpg",
+        "image-11.jpg",
+        "image-3.jpg",
+        "image-7.jpg",
+        "image-10.jpg",
+        "2024-01-19_20-33-44_UTC_1.jpg",
+        "2024-01-20_20-05-41_UTC_2.jpg",
+        "image-5.jpg",
+        "image-9.jpg",
+        "image-14.jpg",
+        "image-8.jpg",
+        "2024-01-20_20-05-41_UTC_1.jpg",
+        "image-13.jpg",
+        "image-6.jpg"
+    ],
+    "matches": [
+        {
+            "round": 20,
+            "participants": [
+                "image-6.jpg",
+                "image-13.jpg"
+            ],
+            "winner": "image-6.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "2024-01-20_20-05-41_UTC_1.jpg",
+                "image-8.jpg"
+            ],
+            "winner": "2024-01-20_20-05-41_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-14.jpg",
+                "image-9.jpg"
+            ],
+            "winner": "image-14.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-5.jpg",
+                "2024-01-20_20-05-41_UTC_2.jpg"
+            ],
+            "winner": "image-5.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_1.jpg",
+                "image-10.jpg"
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-7.jpg",
+                "image-3.jpg"
+            ],
+            "winner": "image-7.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-11.jpg",
+                "image-4.jpg"
+            ],
+            "winner": "image-11.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_2.jpg",
+                "image-12.jpg"
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_2.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "2024-01-26_16-21-02_UTC.jpg",
+                "2024-01-19_20-33-44_UTC_3.jpg"
+            ],
+            "winner": "2024-01-26_16-21-02_UTC.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-2.jpg",
+                "image-15.jpg"
+            ],
+            "winner": "image-2.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 10,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_1.jpg",
+                "image-5.jpg"
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 10,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_2.jpg",
+                "image-7.jpg"
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_2.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 10,
+            "participants": [
+                "image-14.jpg",
+                "image-6.jpg"
+            ],
+            "winner": "image-14.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 10,
+            "participants": [
+                "2024-01-26_16-21-02_UTC.jpg",
+                "image-11.jpg"
+            ],
+            "winner": "2024-01-26_16-21-02_UTC.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 10,
+            "participants": [
+                "2024-01-20_20-05-41_UTC_1.jpg",
+                "image-2.jpg"
+            ],
+            "winner": "2024-01-20_20-05-41_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 6,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_2.jpg",
+                "image-14.jpg"
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_2.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 6,
+            "participants": [
+                "2024-01-20_20-05-41_UTC_1.jpg",
+                "2024-01-26_16-21-02_UTC.jpg"
+            ],
+            "winner": "2024-01-20_20-05-41_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 6,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_1.jpg",
+                ""
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 4,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_1.jpg",
+                "2024-01-19_20-33-44_UTC_2.jpg"
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 4,
+            "participants": [
+                "2024-01-20_20-05-41_UTC_1.jpg",
+                ""
+            ],
+            "winner": "2024-01-20_20-05-41_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 2,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_1.jpg",
+                "2024-01-20_20-05-41_UTC_1.jpg"
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_1.jpg",
+            "status": "completed"
+        }
+    ],
+    "rankings": [
+        {
+            "file": "2024-01-19_20-33-44_UTC_1.jpg",
+            "rank": 1
+        },
+        {
+            "file": "2024-01-20_20-05-41_UTC_1.jpg",
+            "rank": 2
+        },
+        {
+            "file": "2024-01-19_20-33-44_UTC_2.jpg",
+            "rank": 4
+        },
+        {
+            "file": "2024-01-26_16-21-02_UTC.jpg",
+            "rank": 6
+        },
+        {
+            "file": "image-14.jpg",
+            "rank": 6
+        },
+        {
+            "file": "image-2.jpg",
+            "rank": 10
+        },
+        {
+            "file": "image-11.jpg",
+            "rank": 10
+        },
+        {
+            "file": "image-7.jpg",
+            "rank": 10
+        },
+        {
+            "file": "image-5.jpg",
+            "rank": 10
+        },
+        {
+            "file": "image-6.jpg",
+            "rank": 10
+        },
+        {
+            "file": "image-15.jpg",
+            "rank": 20
+        },
+        {
+            "file": "2024-01-19_20-33-44_UTC_3.jpg",
+            "rank": 20
+        },
+        {
+            "file": "image-12.jpg",
+            "rank": 20
+        },
+        {
+            "file": "image-4.jpg",
+            "rank": 20
+        },
+        {
+            "file": "image-3.jpg",
+            "rank": 20
+        },
+        {
+            "file": "image-10.jpg",
+            "rank": 20
+        },
+        {
+            "file": "2024-01-20_20-05-41_UTC_2.jpg",
+            "rank": 20
+        },
+        {
+            "file": "image-9.jpg",
+            "rank": 20
+        },
+        {
+            "file": "image-8.jpg",
+            "rank": 20
+        },
+        {
+            "file": "image-13.jpg",
+            "rank": 20
+        }
+    ]
+}

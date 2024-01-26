@@ -1,0 +1,121 @@
+{
+    "tournament_id": 5874103,
+    "date_created": "2024-01-26-20-00-07",
+    "status": "on-going",
+    "type": "single-knockout",
+    "participants": [
+        "image-6.jpg",
+        "image-5.jpg",
+        "image-11.jpg",
+        "2024-01-20_20-05-41_UTC_2.jpg",
+        "image-3.jpg",
+        "image-4.jpg",
+        "2024-01-19_20-33-44_UTC_2.jpg",
+        "image-7.jpg",
+        "2024-01-19_20-33-44_UTC_3.jpg",
+        "image-2.jpg",
+        "image-9.jpg",
+        "image-14.jpg",
+        "image-12.jpg",
+        "image-8.jpg",
+        "image-13.jpg",
+        "image-10.jpg",
+        "2024-01-26_16-21-02_UTC.jpg",
+        "2024-01-19_20-33-44_UTC_1.jpg",
+        "image-15.jpg",
+        "2024-01-20_20-05-41_UTC_1.jpg"
+    ],
+    "matches": [
+        {
+            "round": 20,
+            "participants": [
+                "2024-01-20_20-05-41_UTC_1.jpg",
+                "image-15.jpg"
+            ],
+            "winner": "2024-01-20_20-05-41_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "2024-01-19_20-33-44_UTC_1.jpg",
+                "2024-01-26_16-21-02_UTC.jpg"
+            ],
+            "winner": "2024-01-19_20-33-44_UTC_1.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-10.jpg",
+                "image-13.jpg"
+            ],
+            "winner": "image-10.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-8.jpg",
+                "image-12.jpg"
+            ],
+            "winner": "image-8.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-14.jpg",
+                "image-9.jpg"
+            ],
+            "winner": "image-14.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-2.jpg",
+                "2024-01-19_20-33-44_UTC_3.jpg"
+            ],
+            "winner": "image-2.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-7.jpg",
+                "2024-01-19_20-33-44_UTC_2.jpg"
+            ],
+            "winner": "image-7.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-4.jpg",
+                "image-3.jpg"
+            ],
+            "winner": "image-4.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "2024-01-20_20-05-41_UTC_2.jpg",
+                "image-11.jpg"
+            ],
+            "winner": "2024-01-20_20-05-41_UTC_2.jpg",
+            "status": "completed"
+        },
+        {
+            "round": 20,
+            "participants": [
+                "image-6.jpg",
+                "image-5.jpg"
+            ],
+            "winner": "image-6.jpg",
+            "status": "completed"
+        }
+    ],
+    "rankings": []
+}

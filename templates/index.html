@@ -1,27 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Image Tournament</title>
+  <title>Tournoi d'image</title>
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <style>
-    body{
+    body {
       background: linear-gradient(to right, skyblue, blue);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
     a {
       font-size: 2em;
+      text-align: center;
+      padding: 50px;
+      width: 50%;
     }
     h1 {
       text-align: center;
       color: white;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, .5);
       font-size: 3em;
-      margin-top: 25%;
     }
   </style>
 </head>
 <body>
-    <div class="container">
-    <h1>Welcome to the Image Tournament</h1>
+  <div class="container">
+    <h1>Tournoi d'images</h1>
     <a href="/start" class="btn btn-primary">Start Tournament</a>
     <a href="/manage" class="btn btn-secondary">Manage Images</a>
   </div>
