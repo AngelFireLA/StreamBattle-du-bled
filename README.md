@@ -1,10 +1,10 @@
 # StreamBattle-du-bled
 Simple webapp to make tournaments between images.
-
-To use it, first put all your images in the static/images/ folder (there are already example images for you to test).
-Then run app.py and the site is ready to go.
-
+Just run app.py
+Then you can manage the images through the 'manage images" button of the main page. You can add one or more images at the same time, and even delete all the images at once.
+A bonus feature is that you can download X number of images from a specific instagram account.
 
 The current round and match number is always shown until the winner.
 For each match you will be shown 2 images and you just need to click on who you want to be this match's winner, and then repeat until one image left.
 Automatically handles any number of images, even odd ones.
+At the end you can download every image that achieved a specific rank.
