@@ -40,6 +40,7 @@ def create_tournament(tournament_id, participants):
 def start():
     global ROUND, WINNERS, TOTAL_IMAGES, round_number
     images = [f for f in os.listdir(images_dir) if os.path.isfile(os.path.join(images_dir, f))]
+    print(images)
     random.shuffle(images)
     tournament_file = create_tournament(random.randint(999, 9999999), images)
     session['tournament_file'] = tournament_file
@@ -135,7 +136,8 @@ def match():
         pair = [ROUND.pop(), ROUND.pop()]
     elif ROUND:
         pair = [ROUND.pop()]
-
+    print(pair
+          )
     return render_template('match.html', pair=pair, round_name="Round of " + str(round_number), round_progress=str(match_number) + "/" + str(int(round_number / 2)))
 
 def calc_round(round_images, total_images):
@@ -239,7 +241,7 @@ import instaloader
 
 count_by_images = False
 
-def download_images(username, max_images=None):
+def download_insta_images(username, max_images=None):
     loader = instaloader.Instaloader(download_comments=False,
                                       download_videos=False,
                                       download_video_thumbnails=False,
@@ -266,6 +268,19 @@ def download_images(username, max_images=None):
             if not re.search(r'UTC(_1)?\.(jpg|jpeg|png)$', image_file):
                 os.remove(os.path.join(username, image_file))
 
+from bing_image_downloader import downloader
+def download_bing_images(search_term, number_of_images, download_path=''):
+    """
+    Downloads a specified number of images using Bing Image Downloader.
+
+    :param search_term: The search term for the images you want to download.
+    :param number_of_images: The number of images to download.
+    :param download_path: The directory path where the images will be saved. Defaults to 'downloaded_images'.
+    """
+    print(download_path, number_of_images, search_term)
+    downloader.download(search_term, limit=number_of_images, output_dir=download_path)
+
+
 @app.route('/delete-all-images', methods=['POST'])
 def delete_all_images():
     image_dir = os.path.join(app.static_folder, 'images')
@@ -283,7 +298,7 @@ def download_instagram_images():
         print("downloading every image")
         max_images = None
     # Use the download_images function to download images
-    download_images(username, max_images)
+    download_insta_images(username, max_images)
 
     # The path where downloaded images are stored
     instagram_folder_path = os.path.join(os.getcwd(), username)
@@ -302,6 +317,25 @@ def download_instagram_images():
 
     return jsonify({'status': 'downloaded'})
 
+@app.route('/download-bing', methods=['POST'])
+def download_bing():
+    keywords = request.form['keywords']
+    max_images = int(request.form['count'])
+
+    # Target path to move images to
+    target_folder_path = os.path.join(app.static_folder, 'images')
+
+    # Use the download_images function to download images
+    download_bing_images(keywords, max_images, target_folder_path)
+    instagram_folder_path = os.path.join(target_folder_path, keywords)
+    for image_file in os.listdir(instagram_folder_path):
+        source_path = os.path.join(instagram_folder_path, image_file)
+        target_path = os.path.join(target_folder_path, image_file)
+        shutil.move(source_path, target_path)
+
+    # Remove the now-empty Instagram folder
+    shutil.rmtree(instagram_folder_path)
+    return jsonify({'status': 'downloaded'})
 
 
 if __name__ == "__main__":

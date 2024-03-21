@@ -99,6 +99,12 @@
       <button class="btn btn-info" onclick="downloadInstagramImages()">Download Images from Instagram</button>
     </div>
 
+      <div class="mb-3">
+      <input type="text" id="bing-keywords" class="form-control" placeholder="Instagram Username">
+      <input type="number" id="bing-image-count" class="form-control" min="1" max="75" step="1">
+      <button class="btn btn-info" onclick="downloadBingImages()">Download Images from Bing</button>
+    </div>
+
     <!-- Existing image grid and add button -->
 
     <!-- Delete All Button -->
@@ -113,6 +119,15 @@
       var count = document.getElementById('image-count').value;
 
       $.post('/download-instagram', {username: username, count: count}, function(response) {
+        location.reload(); // Reload the page to update the image list
+      });
+    }
+
+    function downloadBingImages() {
+      var keywords = document.getElementById('bing-keywords').value;
+      var count = document.getElementById('bing-image-count').value;
+
+      $.post('/download-bing', {keywords: keywords, count: count}, function(response) {
         location.reload(); // Reload the page to update the image list
       });
     }
