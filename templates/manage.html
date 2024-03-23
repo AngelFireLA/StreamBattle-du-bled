@@ -93,6 +93,7 @@
           left: 20px;
           background-color: transparent;
           color: #007bff;
+          font-size: 50px; /* Increase font size */
         }
         .input {
           border: 2px solid #ddd; /* Lighter border color */
@@ -107,10 +108,97 @@
         .space-y-8 > * + * {
           margin-top: 2rem; /* Additional spacing */
         }
+    /* Style pour le floutage des images */
+.image-container.blur img {
+  filter: blur(8px);
+}
+
+/* Conteneur pour le switch et le texte */
+.blur-toggle-container {
+  position: absolute;
+  top: 20px; /* Aligner avec le haut de la plus haute image */
+  right: 20px;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border: 2px solid #007bff; /* Bordure du conteneur */
+  border-radius: 10px; /* Bords arrondis */
+  background-color: white; /* Arrière-plan blanc pour contraster avec le flou */
+  margin-left: 20px; /* Espacement depuis le bord gauche des images */
+}
+
+/* Style pour le floutage des images */
+.image-container.blur img {
+  filter: blur(10px);
+}
+
+/* Style pour le bouton de floutage */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Arrondi des sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
 
     </style>
 </head>
 <body>
+
+
+<!-- Image Loader -->
 <div class="container my-4">
     <div class="image-grid">
         {% for image in images %}
@@ -127,6 +215,7 @@
 <button class="fixed-btn" id="returnHomeBtn" title="Retourner à l'accueil" onclick="window.location.href='/'"><i class="fas fa-home"></i></button>
 <button class="fixed-btn" id="deleteAllBtn" title="Supprimer toutes les images" onclick="deleteAllImages()"><i class="fas fa-times"></i></button>
 
+
 <div class="container mx-auto mb-8 p-4 rounded-lg shadow-lg bg-white space-y-8">
     <div class="flex flex-col md:flex-row gap-2 items-center">
         <input class="input w-2/3" id="instagram-username" placeholder="Nom d'utilisateur Instagram" type="text">
@@ -140,6 +229,20 @@
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-1/6" onclick="downloadBingImages()">Télécharger depuis Bing</button>
     </div>
 </div>
+
+<!-- Conteneur pour le bouton de floutage et le texte -->
+<div class="blur-toggle-container">
+    <div class="blur-toggle">
+<span style="font-weight: bold; font-size: 1.25rem; display: inline-flex; align-items: center;">Flou</span>
+        <label class="switch">
+          <input type="checkbox" id="blurToggle" checked>
+          <span class="slider round"></span>
+        </label>
+
+    </div>
+</div>
+
+
 
 <!-- Add this inside your body tag, preferably at the end or where you see fit -->
 <input type="file" id="image-upload" style="display: none;" multiple onchange="uploadImages()" />
@@ -213,6 +316,34 @@ function downloadBingImages() {
             }
         });
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const blurToggle = document.getElementById('blurToggle');
+    const imageContainers = document.querySelectorAll('.image-container');
+
+    // Charger l'état du floutage et appliquer si nécessaire
+    const blurState = localStorage.getItem('blurImages') === 'true';
+    blurToggle.checked = blurState;
+    toggleBlur(blurState);
+
+    // Écouter le changement sur le bouton de floutage
+    blurToggle.addEventListener('change', function() {
+        const shouldBlur = blurToggle.checked;
+        toggleBlur(shouldBlur);
+        localStorage.setItem('blurImages', shouldBlur);
+    });
+
+    function toggleBlur(enable) {
+        imageContainers.forEach(container => {
+            if (enable) {
+                container.classList.add('blur');
+            } else {
+                container.classList.remove('blur');
+            }
+        });
+    }
+});
+
 </script>
 </body>
 </html>

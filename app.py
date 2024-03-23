@@ -1,9 +1,16 @@
 import json
+import random
 import re
 from datetime import datetime
-
-from flask import Flask, render_template, request, redirect, url_for, session
-import os, random, math
+from flask import render_template, request, redirect, url_for, jsonify
+import os
+import shutil
+import hashlib
+from flask import Flask, session
+import zipfile
+from flask import send_file
+import instaloader
+from bing_image_downloader import downloader
 
 app = Flask(__name__)
 
@@ -25,6 +32,7 @@ TOTAL_IMAGES = None
 round_number = None
 match_number = 0
 
+
 def create_tournament(tournament_id, participants):
     date_prefix = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
@@ -41,6 +49,7 @@ def create_tournament(tournament_id, participants):
     with open(os.path.join(tournaments_dir, file_name), 'w') as file:
         json.dump(tournament_data, file)
     return file_name
+
 
 @app.route('/start', methods=['GET'])
 def start():
@@ -72,6 +81,7 @@ def randomize_list(input_list):
         randomized_list[i], randomized_list[j] = randomized_list[j], randomized_list[i]
 
     return randomized_list
+
 
 @app.route('/match', methods=['GET', 'POST'])
 def match():
@@ -111,8 +121,8 @@ def match():
                     if participant not in rankings:
                         # Find the highest round this participant reached
                         max_round = max(
-                            (match['round'] for match in tournament_data['matches'] if
-                             participant in match['participants'] and match['winner'] != participant),
+                            (m['round'] for m in tournament_data['matches'] if
+                             participant in m['participants'] and m['winner'] != participant),
                             default=0
                         )
                         rankings[participant] = max_round
@@ -134,6 +144,7 @@ def match():
             else:
                 round_number = len(ROUND)
 
+
         return redirect(url_for('match'))
 
     match_number += 1
@@ -144,7 +155,9 @@ def match():
         pair = [ROUND.pop()]
     print(pair
           )
-    return render_template('match.html', pair=pair, round_name="Round of " + str(round_number), round_progress=str(match_number) + "/" + str(int(round_number / 2)))
+    return render_template('match.html', pair=pair, round_name="Round of " + str(round_number),
+                           round_progress=str(match_number) + "/" + str(int(round_number / 2)))
+
 
 def calc_round(round_images, total_images):
     round_name = total_images
@@ -153,8 +166,7 @@ def calc_round(round_images, total_images):
     round_num = round_images // 2
     total_rounds = total_images // 2
     return round_name, round_num, total_rounds
-import zipfile
-from flask import send_file
+
 
 @app.route('/download_rank/<int:rank>')
 def download_rank(rank):
@@ -185,15 +197,13 @@ def download_rank(rank):
 def index():
     return render_template('index.html')
 
-from flask import Flask, render_template, request, redirect, url_for, jsonify
-import os, shutil, hashlib
-
 
 @app.route('/manage')
 def manage():
     images = os.listdir(os.path.join(app.static_folder, 'images'))
     images = [img for img in images]
     return render_template('manage.html', images=images)
+
 
 @app.route('/delete-image', methods=['POST'])
 def delete_image():
@@ -203,12 +213,14 @@ def delete_image():
 
     return jsonify({'status': 'moved'})
 
+
 @app.route('/upload-images', methods=['POST'])
 def upload_images():
     uploaded_files = request.files.getlist("images[]")
     for file in uploaded_files:
         file.save(os.path.join(app.static_folder, 'images', file.filename))
     return jsonify({'status': 'uploaded'})
+
 
 def file_content_hash(file_path):
     """Generate a hash of the file content."""
@@ -217,6 +229,7 @@ def file_content_hash(file_path):
         buf = f.read()
         hasher.update(buf)
     return hasher.hexdigest()
+
 
 def rename_file(directory, file_name):
     """Rename a file to avoid name conflicts."""
@@ -228,18 +241,18 @@ def rename_file(directory, file_name):
         new_name = f"{base}_{counter}{ext}"
     return new_name
 
-import instaloader
 
 count_by_images = False
 
+
 def download_insta_images(username, max_images=None):
     loader = instaloader.Instaloader(download_comments=False,
-                                      download_videos=False,
-                                      download_video_thumbnails=False,
-                                      download_geotags=False,
-                                      save_metadata=False,
-                                      post_metadata_txt_pattern='',
-                                      filename_pattern='{date_utc}_UTC')
+                                     download_videos=False,
+                                     download_video_thumbnails=False,
+                                     download_geotags=False,
+                                     save_metadata=False,
+                                     post_metadata_txt_pattern='',
+                                     filename_pattern='{date_utc}_UTC')
     profile = instaloader.Profile.from_username(loader.context, username)
 
     image_count = 0
@@ -259,7 +272,7 @@ def download_insta_images(username, max_images=None):
             if not re.search(r'UTC(_1)?\.(jpg|jpeg|png)$', image_file):
                 os.remove(os.path.join(username, image_file))
 
-from bing_image_downloader import downloader
+
 def download_bing_images(search_term, number_of_images, download_path=''):
     """
     Downloads a specified number of images using Bing Image Downloader.
@@ -276,9 +289,9 @@ def download_bing_images(search_term, number_of_images, download_path=''):
 def delete_all_images():
     image_dir = os.path.join(app.static_folder, 'images')
     for image in os.listdir(image_dir):
-
         os.remove(os.path.join(app.static_folder, 'images', image))
     return jsonify({'status': 'all_deleted'})
+
 
 @app.route('/download-instagram', methods=['POST'])
 def download_instagram_images():
@@ -307,6 +320,7 @@ def download_instagram_images():
     shutil.rmtree(instagram_folder_path)
 
     return jsonify({'status': 'downloaded'})
+
 
 @app.route('/download-bing', methods=['POST'])
 def download_bing():

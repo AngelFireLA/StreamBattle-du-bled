@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tournoi d'image</title>
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    :root {
+      --btn-primary-color: #007bff;
+      --btn-secondary-color: #6c757d;
+    }
+
     body {
       background: linear-gradient(to right, skyblue, blue);
       display: flex;
@@ -13,25 +20,62 @@
       height: 100vh;
       margin: 0;
     }
-    a {
-      font-size: 2em;
+
+    .container {
       text-align: center;
-      padding: 50px;
-      width: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
-    h1 {
-      text-align: center;
+
+    .container h1 {
       color: white;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, .5);
-      font-size: 3em;
+      font-size: 2.5em;
+      margin-bottom: 20px; /* Adjusted spacing to ensure buttons are below the middle of the text */
+      animation: fadeInDown 2s ease-out;
+    }
+
+    .btn {
+      font-size: 1.2em;
+      padding: 15px;
+      width: 80%;
+      max-width: 300px;
+      margin: 10px 0; /* Adjusted for better spacing */
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .btn:hover, .btn:focus {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+
+    @media (max-width: 768px) {
+      .btn {
+        width: 90%;
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translate3d(0, -100%, 0);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Tournoi d'images</h1>
-    <a href="/start" class="btn btn-primary">Start Tournament</a>
-    <a href="/manage" class="btn btn-secondary">Manage Images</a>
+    <a href="/start" class="btn btn-primary">Commencer un Tournoi</a>
+    <a href="/manage" class="btn btn-secondary">Gestion des Images</a>
   </div>
 </body>
 </html>

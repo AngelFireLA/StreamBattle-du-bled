@@ -1,47 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Image Tournament</title>
-  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <title>Image Tournament Results</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    img {
-      width: 300px;
-      height: 300px;
-      object-fit: cover;
-      margin: 30px auto;
+    :root {
+      --winner-image-size: 400px; /* Larger size for the winner's image */
     }
+
     body {
       background: linear-gradient(to right, skyblue, blue);
+      padding-top: 20px;
     }
+
+    .winner-image {
+      width: var(--winner-image-size);
+      height: var(--winner-image-size);
+      object-fit: cover;
+      margin: 0 auto 40px; /* Center the image and add space below */
+    }
+
+    h1, h2 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
     .ranking-table {
-      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsive grid */
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .rank-entry {
+      background: rgba(255, 255, 255, 0.8);
+      padding: 15px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .rank-entry img {
+      width: 100%;
+      height: auto; /* Maintain aspect ratio */
+      max-height: 150px; /* Limit image height */
+      object-fit: cover;
+      margin-bottom: 15px;
+    }
+
+    .btn-primary {
+      width: auto; /* Adjust button width based on content */
+      margin: 10px 0; /* Spacing around buttons */
+    }
+
+    .return-home-btn {
+      display: block; /* Make the return home button block level */
+      width: 200px;
+      margin: 20px auto; /* Center the button horizontally */
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>And the winner is...</h1>
-    <img src="{{ url_for('static', filename='images/' + image) }}" class="mx-auto d-block">
+    <img src="{{ url_for('static', filename='images/' + image) }}" class="winner-image mx-auto d-block">
     <h2>Rankings</h2>
-    <table class="table ranking-table">
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Image</th>
-          <th>Download</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for entry in rankings %}
-        <tr>
-          <td>{{ entry.rank }}</td>
-          <td><img src="{{ url_for('static', filename='images/' + entry.file) }}" width="100" height="100"></td>
-          <td><a href="{{ url_for('download_rank', rank=entry.rank) }}" class="btn btn-primary">Download Rank {{ entry.rank }}</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <a href="{{ url_for('index') }}" class="btn btn-primary d-block mx-auto mt-4">Return Home</a>
+    <div class="ranking-table">
+      {% for entry in rankings %}
+      <div class="rank-entry">
+        <img src="{{ url_for('static', filename='images/' + entry.file) }}">
+        <a href="{{ url_for('download_rank', rank=entry.rank) }}" class="btn btn-primary">Download Rank {{ entry.rank }}</a>
+      </div>
+      {% endfor %}
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-primary return-home-btn">Return Home</a>
   </div>
 </body>
 </html>
