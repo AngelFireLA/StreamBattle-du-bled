@@ -1,81 +1,106 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Image Tournament Results</title>
+  <title>Résultats</title>
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Include Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
   <style>
-    :root {
-      --winner-image-size: 400px; /* Larger size for the winner's image */
-    }
-
     body {
       background: linear-gradient(to right, skyblue, blue);
       padding-top: 20px;
     }
-
     .winner-image {
-      width: var(--winner-image-size);
-      height: var(--winner-image-size);
+      max-width: 60%;
+      height: auto;
       object-fit: cover;
-      margin: 0 auto 40px; /* Center the image and add space below */
+      margin: 0 auto 40px;
+      display: block;
+      border: 5px solid gold; /* Highlighting the winner's image */
     }
-
-    h1, h2 {
+    h1, h2, h3 {
       color: white;
       text-align: center;
       margin-bottom: 30px;
     }
-
-    .ranking-table {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsive grid */
+    .ranking-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 20px;
-      margin-bottom: 40px;
+      margin-bottom: 40px; /* Added bottom margin for separation between ranks */
     }
-
     .rank-entry {
       background: rgba(255, 255, 255, 0.8);
       padding: 15px;
       border-radius: 10px;
       display: flex;
-      flex-direction: column;
+      flex-direction: row; /* Align images side by side */
       align-items: center;
+      gap: 10px; /* Gap between images */
+      flex-wrap: wrap; /* Allow wrapping for items */
     }
-
     .rank-entry img {
       width: 100%;
-      height: auto; /* Maintain aspect ratio */
-      max-height: 150px; /* Limit image height */
+      max-width: 150px; /* Consistent image size */
+      height: auto;
       object-fit: cover;
-      margin-bottom: 15px;
     }
-
-    .btn-primary {
-      width: auto; /* Adjust button width based on content */
-      margin: 10px 0; /* Spacing around buttons */
+    .download-btn {
+      padding: 5px 10px; /* Fixed padding for smaller button */
+      margin-top: 10px; /* Margin top to separate from images */
+      font-size: 16px; /* Font size adjustment */
+      display: inline-flex; /* Inline flex for alignment */
+      align-items: center; /* Center items vertically */
+      justify-content: center; /* Center content horizontally */
     }
-
-    .return-home-btn {
-      display: block; /* Make the return home button block level */
-      width: 200px;
-      margin: 20px auto; /* Center the button horizontally */
-    }
+    .fixed-btn {
+          position: fixed;
+          z-index: 10;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 60px;
+          height: 60px;
+          font-size: 30px;
+          border-radius: 50%;
+          transition: transform .3s ease;
+        }
+        .fixed-btn:hover {
+          transform: scale(1.1);
+        }
+              #returnHomeBtn {
+          top: 20px;
+          left: 20px;
+          background-color: transparent;
+          color: #007bff;
+          font-size: 50px; /* Increase font size */
+        }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>And the winner is...</h1>
-    <img src="{{ url_for('static', filename='images/' + image) }}" class="winner-image mx-auto d-block">
+    <h1>L'image gagnante est...</h1>
+    <img src="{{ url_for('static', filename='images/' + winner_image) }}" class="winner-image">
     <h2>Rankings</h2>
-    <div class="ranking-table">
-      {% for entry in rankings %}
-      <div class="rank-entry">
-        <img src="{{ url_for('static', filename='images/' + entry.file) }}">
-        <a href="{{ url_for('download_rank', rank=entry.rank) }}" class="btn btn-primary">Download Rank {{ entry.rank }}</a>
+    <!-- Loop through each rank -->
+    {% for rank in rankings %}
+      <h3>Rank {{ rank.rank }}</h3>
+      <div class="ranking-container">
+        <!-- Loop through images in this rank -->
+        <div class="rank-entry">
+          {% for image in rank.images %}
+            <img src="{{ url_for('static', filename='images/' + image) }}">
+          {% endfor %}
+          <!-- Download button with icon -->
+          <a href="{{ url_for('download_rank', rank=rank.rank) }}" class="btn btn-primary download-btn">
+            <i class="fas fa-download"></i>  Top {{ rank.rank }}
+          </a>
+        </div>
       </div>
-      {% endfor %}
-    </div>
-    <a href="{{ url_for('index') }}" class="btn btn-primary return-home-btn">Return Home</a>
+    {% endfor %}
+        <button class="fixed-btn" id="returnHomeBtn" title="Retourner à l'accueil" onclick="window.location.href='/'"><i class="fas fa-home"></i></button>
   </div>
 </body>
 </html>

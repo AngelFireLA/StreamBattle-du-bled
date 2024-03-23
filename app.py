@@ -83,6 +83,24 @@ def randomize_list(input_list):
     return randomized_list
 
 
+def convert_to_rankings(image_list):
+    rankings = []
+    for item in image_list:
+        # Find if the rank already exists in the rankings list
+        existing_rank = next((rank for rank in rankings if rank['rank'] == item['rank']), None)
+
+        if existing_rank is None:
+            # If the rank doesn't exist, add a new entry
+            rankings.append({'rank': item['rank'], 'images': [item['file']]})
+        else:
+            # If the rank exists, append the file to the images list
+            existing_rank['images'].append(item['file'])
+
+    # Sorting the list based on rank
+    rankings.sort(key=lambda x: x['rank'])
+    return rankings
+
+
 @app.route('/match', methods=['GET', 'POST'])
 def match():
     global ROUND, WINNERS, TOTAL_IMAGES, round_number, match_number
@@ -134,7 +152,7 @@ def match():
                 with open(os.path.join(tournaments_dir, tournament_file), 'w') as file:
                     json.dump(tournament_data, file, indent=4)
 
-                return render_template('winner.html', image=WINNERS[0], rankings=tournament_data['rankings'])
+                return render_template('winner.html', winner_image=WINNERS[0], rankings=convert_to_rankings(tournament_data['rankings']))
             WINNERS = randomize_list(WINNERS)
             ROUND, WINNERS = WINNERS, []
             ROUND = randomize_list(ROUND)
@@ -143,7 +161,6 @@ def match():
                 round_number = len(ROUND) + 1
             else:
                 round_number = len(ROUND)
-
 
         return redirect(url_for('match'))
 

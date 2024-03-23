@@ -129,7 +129,7 @@
 
 /* Style pour le floutage des images */
 .image-container.blur img {
-  filter: blur(10px);
+  filter: blur(12px);
 }
 
 /* Style pour le bouton de floutage */
@@ -192,6 +192,26 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+.btn-description {
+  color: grey; /* Text color */
+  font-weight: bold; /* Make text bold */
+  position: fixed; /* Position relative to the viewport */
+  display: flex; /* Use flexbox for centering */
+  align-items: center; /* Vertical centering */
+  z-index: 11; /* Ensure it's above most elements */
+}
+
+#addImageBtnDesc {
+  right: 90px; /* Adjust based on the exact positioning of your button */
+  bottom: 26px; /* Adjust based on the exact positioning of your button */
+  font-size: 1.25rem;
+}
+
+#deleteAllBtnDesc {
+  left: 90px; /* Adjust based on the exact positioning of your button */
+  bottom: 26px; /* Adjust based on the exact positioning of your button */
+  font-size: 1.25rem;
+}
 
     </style>
 </head>
@@ -210,10 +230,13 @@ input:checked + .slider:before {
     </div>
 </div>
 
-<!-- Floating Action Buttons -->
 <button class="fixed-btn" id="addImageBtn" title="Ajouter des images" onclick="document.getElementById('image-upload').click();"><i class="fas fa-plus"></i></button>
+<span class="btn-description" id="addImageBtnDesc">Ajouter des images</span> <!-- Description for upload button -->
+
 <button class="fixed-btn" id="returnHomeBtn" title="Retourner à l'accueil" onclick="window.location.href='/'"><i class="fas fa-home"></i></button>
+
 <button class="fixed-btn" id="deleteAllBtn" title="Supprimer toutes les images" onclick="deleteAllImages()"><i class="fas fa-times"></i></button>
+<span class="btn-description" id="deleteAllBtnDesc">Supprimer toutes les images</span> <!-- Description for delete all button -->
 
 
 <div class="container mx-auto mb-8 p-4 rounded-lg shadow-lg bg-white space-y-8">
