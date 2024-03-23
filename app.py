@@ -7,6 +7,12 @@ import os, random, math
 
 app = Flask(__name__)
 
+if not os.path.exists(os.path.join(app.static_folder, 'images')):
+    os.makedirs(os.path.join(app.static_folder, 'images'))
+
+if not os.path.exists(os.path.join(app.static_folder, 'tournaments')):
+    os.makedirs(os.path.join(app.static_folder, 'tournaments'))
+
 # load images
 images_dir = os.path.join(app.static_folder, 'images')
 tournaments_dir = os.path.join(app.static_folder, 'tournaments')
@@ -182,33 +188,18 @@ def index():
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os, shutil, hashlib
 
-# Assuming a 'deleted' folder exists within 'static/images'
-deleted_folder = os.path.join(app.static_folder, 'deleted')
 
 @app.route('/manage')
 def manage():
     images = os.listdir(os.path.join(app.static_folder, 'images'))
-    images = [img for img in images] # Exclude the 'deleted' folder
+    images = [img for img in images]
     return render_template('manage.html', images=images)
 
 @app.route('/delete-image', methods=['POST'])
 def delete_image():
     image_name = request.form['image']
     image_path = os.path.join(app.static_folder, 'images', image_name)
-    deleted_image_path = os.path.join(deleted_folder, image_name)
-
-    # Check if the image already exists in the 'deleted' folder
-    if os.path.exists(deleted_image_path):
-        # Compare content to avoid duplicate images with different names
-        if file_content_hash(image_path) == file_content_hash(deleted_image_path):
-            os.remove(image_path) # Remove the current image as it's a duplicate
-            return jsonify({'status': 'deleted'})
-        else:
-            # Rename the image to avoid name conflict
-            new_name = rename_file(deleted_folder, image_name)
-            shutil.move(image_path, os.path.join(deleted_folder, new_name))
-    else:
-        shutil.move(image_path, deleted_image_path)
+    os.remove(image_path)
 
     return jsonify({'status': 'moved'})
 
@@ -285,9 +276,8 @@ def download_bing_images(search_term, number_of_images, download_path=''):
 def delete_all_images():
     image_dir = os.path.join(app.static_folder, 'images')
     for image in os.listdir(image_dir):
-        if image != 'deleted':  # Avoid deleting the 'deleted' folder
-            image_path = os.path.join(image_dir, image)
-            shutil.move(image_path, os.path.join(deleted_folder, image))
+
+        os.remove(os.path.join(app.static_folder, 'images', image))
     return jsonify({'status': 'all_deleted'})
 
 @app.route('/download-instagram', methods=['POST'])
@@ -295,6 +285,7 @@ def download_instagram_images():
     username = request.form['username']
     max_images = int(request.form['count'])
     if max_images == 69:
+        print("downloading every image")
         print("downloading every image")
         max_images = None
     # Use the download_images function to download images

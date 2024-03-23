@@ -3,3 +3,6 @@
 /.idea
 test.py
 /static/deleted
+keep/
+/static/images
+/static/tournaments
