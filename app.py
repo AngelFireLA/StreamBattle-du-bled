@@ -359,6 +359,100 @@ def download_bing():
     shutil.rmtree(instagram_folder_path)
     return jsonify({'status': 'downloaded'})
 
+IMAGE_PACKS = [
+    {
+        "id": 1,
+        "name": "Nature Pack",
+        "category": "Outdoors",
+        "preview": "nature_preview.jpg",
+        "folder": "nature"
+    },
+    {
+        "id": 2,
+        "name": "Dog Pack",
+        "category": "animals",
+        "preview": "Image_4.jpg",
+        "folder":"dog"
+    },
+]
 
+@app.route('/store')
+def store():
+    packs = IMAGE_PACKS
+    for pack in packs:
+        if os.path.exists(os.path.join(app.static_folder, f'packs/{pack["folder"]}')):
+
+            pack["images"] = [image for image in os.listdir(os.path.join(app.static_folder, f'packs/{pack["folder"]}'))]
+        else:
+            pack["images"] = []
+    return render_template('store.html', packs=IMAGE_PACKS)
+
+@app.route('/add-pack', methods=['POST'])
+def add_pack():
+    pack_id = request.form.get('packId')
+    pack = next((pack for pack in IMAGE_PACKS if pack['id'] == int(pack_id)), None)
+
+    if pack:
+        for image in os.listdir(os.path.join(app.static_folder, f'packs/{pack["folder"]}')):
+            image_path = os.path.join(app.static_folder, f'packs/{pack["folder"]}', image)
+            if not os.path.exists(image_path):
+                print(f"Image '{image}' does not exist in the 'images' folder.")
+            else:
+                shutil.copy(image_path, os.path.join(images_dir, image))
+
+        return jsonify({'status': 'success'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Invalid pack ID'}), 400
+
+import os
+from flask import request, redirect, url_for
+from werkzeug.utils import secure_filename
+
+# Add this function to handle the form submission
+@app.route('/create-pack', methods=['POST'])
+def create_pack():
+    pack_name = request.form.get('pack-name')
+    if not pack_name:
+        return 'Pack name is required', 400
+
+    pack_category = request.form.get('pack-category')
+    pack_preview = request.files.get('pack-preview')
+    pack_images = request.files.getlist('pack-images')
+
+    # Create a new folder for the pack
+    pack_folder = os.path.join(app.static_folder, 'packs', secure_filename(pack_name.lower().replace(' ', '_')))
+    os.makedirs(pack_folder, exist_ok=True)
+
+    # Save the preview image
+    if pack_preview:
+        preview_filename = secure_filename(pack_preview.filename)
+        pack_preview.save(os.path.join(pack_folder, preview_filename))
+    else:
+        return 'No preview image provided', 400
+
+    # Save the pack images
+    if not pack_images:
+        return 'No images provided for the pack', 400
+
+    for image in pack_images:
+        image_filename = secure_filename(image.filename)
+        image.save(os.path.join(pack_folder, image_filename))
+
+    # Add the new pack to the IMAGE_PACKS list
+    new_pack = {
+        'id': len(IMAGE_PACKS) + 1,
+        'name': pack_name,
+        'category': pack_category,
+        'preview': preview_filename,
+        'folder': os.path.basename(pack_folder),
+        'images': [image.filename for image in pack_images]
+    }
+    IMAGE_PACKS.append(new_pack)
+
+    return redirect(url_for('store'))
+
+@app.route('/create-pack', methods=['GET'])
+def create_pack_page():
+    return render_template('create_pack.html')
 if __name__ == "__main__":
     app.run(debug=True)

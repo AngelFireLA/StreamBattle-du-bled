@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Custom Image Pack</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, skyblue, blue);
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            margin-top: 20px;
+        }
+
+        .image-preview img {
+            max-width: 100px;
+            height: auto;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .fixed-btn {
+            position: fixed;
+            z-index: 10;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            font-size: 30px;
+            border-radius: 50%;
+            transition: transform .3s ease;
+            background-color: transparent;
+            color: #007bff;
+            top: 20px;
+            left: 20px;
+        }
+
+        .fixed-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('index') }}" class="fixed-btn" title="Retourner à l'accueil"><i class="fas fa-home"></i></a>
+
+    <div class="container">
+        <h1 class="text-center mb-4">Create Custom Image Pack</h1>
+        <form id="create-pack-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="pack-name">Pack Name:</label>
+                <input type="text" id="pack-name" name="pack-name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="pack-category">Category:</label>
+                <input type="text" id="pack-category" name="pack-category" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="pack-preview">Preview Image:</label>
+                <input type="file" id="pack-preview" name="pack-preview" class="form-control-file" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label for="pack-images">Images:</label>
+                <input type="file" id="pack-images" name="pack-images" class="form-control-file" accept="image/*" multiple required>
+            </div>
+            <div class="image-preview"></div>
+            <button type="submit" class="btn btn-primary">Create Pack</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#pack-images').on('change', function() {
+                $('.image-preview').empty();
+                var files = $(this)[0].files;
+                for (var i = 0; i < files.length; i++) {
+                    var reader = new FileReader();
+                    reader.onload = (function(file) {
+                        return function(e) {
+                            var imgElement = $('<img>').attr('src', e.target.result);
+                            $('.image-preview').append(imgElement);
+                        }
+                    })(files[i]);
+                    reader.readAsDataURL(files[i]);
+                }
+            });
+
+            $('#create-pack-form').on('submit', function(e) {
+                e.preventDefault();
+                var formData = new FormData(this);
+                $.ajax({
+                    url: '/create-pack',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        alert('Pack created successfully!');
+                        window.location.href = '/store';
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error creating pack: ' + xhr.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
