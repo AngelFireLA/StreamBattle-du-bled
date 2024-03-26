@@ -11,8 +11,56 @@ import zipfile
 from flask import send_file
 import instaloader
 from bing_image_downloader import downloader
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+import os
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
+from flask_login import current_user, login_user, logout_user, login_required
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import Flask, flash, get_flashed_messages, redirect, render_template, request, url_for
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tournamentsite.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+login = LoginManager(app)
+login.login_view = "login"  #
+
+class Pack(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.Text, nullable=False)
+    folder = db.Column(db.Text, nullable=False)
+    categories = db.Column(db.Text, nullable=False)
+    preview = db.Column(db.Text, nullable=False)
+    images = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+    private = db.Column(db.Boolean, nullable=False)
+    authorized_users = db.Column(db.String, nullable=False)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(120), nullable=False)
+    packs = db.Column(db.Text, nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    @login.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
+
+with app.app_context():
+    db.create_all()
 
 if not os.path.exists(os.path.join(app.static_folder, 'images')):
     os.makedirs(os.path.join(app.static_folder, 'images'))
@@ -24,6 +72,15 @@ if not os.path.exists(os.path.join(app.static_folder, 'tournaments')):
 images_dir = os.path.join(app.static_folder, 'images')
 tournaments_dir = os.path.join(app.static_folder, 'tournaments')
 app.secret_key = "srguzGW2kTdjhqpsUKnG5DyJvvCUk5b9"
+
+import sqlite3
+
+conn = sqlite3.connect('db.sqlite')
+
+cursor = conn.cursor()
+
+cursor.execute(
+    """CREATE TABLE IF NOT EXISTS packs(id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, nom TEXT, folder TEXT, categories TEXT, preview TEXT, images TEXT)""")
 
 # These variables store the current images being compared (ROUND) and the winners of these comparisons (WINNERS)
 ROUND = []
@@ -99,6 +156,86 @@ def convert_to_rankings(image_list):
     # Sorting the list based on rank
     rankings.sort(key=lambda x: x['rank'])
     return rankings
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    form = forms.UpdateProfileForm()
+    if form.validate_on_submit():
+        if current_user.check_password(form.password.data):
+            current_user.email = form.email.data
+            current_user.username = form.name.data
+            db.session.commit()
+            flash('Profile updated')
+            return redirect(url_for('profile'))
+        else:
+            flash('Incorrect password')
+    return render_template('profile.html', form=form, current_user=current_user)
+
+
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField, PasswordField
+from wtforms.validators import DataRequired, Email
+
+
+class RegistrationForm(FlaskForm): name = StringField('Full Name', validators=[DataRequired()])
+
+
+email = StringField('Email', validators=[DataRequired(), Email()])
+password = PasswordField('Password', validators=[DataRequired()])
+submit = SubmitField('Register')
+
+
+class LoginForm(FlaskForm): email_or_username = StringField('Email or Username', validators=[DataRequired()])
+
+
+password = PasswordField('Password', validators=[DataRequired()])
+submit = SubmitField('Login')
+
+
+class UpdateProfileForm(FlaskForm): name = StringField('Full Name', validators=[DataRequired()])
+
+
+email = StringField('Email', validators=[DataRequired(), Email()])
+password = PasswordField('Enter Password to Confirm Changes', validators=[DataRequired()])
+submit = SubmitField('Save Changes')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.name.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Congratulations, you are now a registered user!')
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email_or_username.data).first()
+        if user is None:
+            user = User.query.filter_by(username=form.email_or_username.data).first()
+        if user is None or not user.check_password(form.password.data):
+            flash('Invalid email or password')
+            return redirect(url_for('login'))
+        login_user(user)
+        return redirect(url_for('index'))
+    return render_template('login.html', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out')
+    return redirect(url_for('login'))
 
 
 @app.route('/match', methods=['GET', 'POST'])
@@ -359,38 +496,38 @@ def download_bing():
     shutil.rmtree(instagram_folder_path)
     return jsonify({'status': 'downloaded'})
 
-IMAGE_PACKS = [
-    {
-        "id": 1,
-        "name": "Nature Pack",
-        "category": "Outdoors",
-        "preview": "nature_preview.jpg",
-        "folder": "nature"
-    },
-    {
-        "id": 2,
-        "name": "Dog Pack",
-        "category": "animals",
-        "preview": "Image_4.jpg",
-        "folder":"dog"
-    },
-]
+
+def get_all_packs():
+    packs_query = Pack.query.all()  # Retrieve all pack entries from the database
+    IMAGE_PACKS = []
+    for pack in packs_query:
+        # For each pack, construct a dictionary with the required structure
+        pack_dict = {
+            "id": pack.id,
+            "name": pack.name,
+            "category": pack.categories,  # Assuming the field is named 'categories' in your model
+            "preview": pack.preview,
+            "folder": pack.folder
+        }
+        IMAGE_PACKS.append(pack_dict)
+
+    return IMAGE_PACKS
+
 
 @app.route('/store')
 def store():
-    packs = IMAGE_PACKS
+    packs = get_all_packs()
     for pack in packs:
         if os.path.exists(os.path.join(app.static_folder, f'packs/{pack["folder"]}')):
-
             pack["images"] = [image for image in os.listdir(os.path.join(app.static_folder, f'packs/{pack["folder"]}'))]
         else:
             pack["images"] = []
-    return render_template('store.html', packs=IMAGE_PACKS)
+    return render_template('store.html', packs=packs)
 
 @app.route('/add-pack', methods=['POST'])
 def add_pack():
     pack_id = request.form.get('packId')
-    pack = next((pack for pack in IMAGE_PACKS if pack['id'] == int(pack_id)), None)
+    pack = next((pack for pack in get_all_packs() if pack['id'] == int(pack_id)), None)
 
     if pack:
         for image in os.listdir(os.path.join(app.static_folder, f'packs/{pack["folder"]}')):
@@ -407,6 +544,7 @@ def add_pack():
 import os
 from flask import request, redirect, url_for
 from werkzeug.utils import secure_filename
+
 
 # Add this function to handle the form submission
 @app.route('/create-pack', methods=['POST'])
@@ -438,21 +576,22 @@ def create_pack():
         image_filename = secure_filename(image.filename)
         image.save(os.path.join(pack_folder, image_filename))
 
-    # Add the new pack to the IMAGE_PACKS list
-    new_pack = {
-        'id': len(IMAGE_PACKS) + 1,
-        'name': pack_name,
-        'category': pack_category,
-        'preview': preview_filename,
-        'folder': os.path.basename(pack_folder),
-        'images': [image.filename for image in pack_images]
-    }
-    IMAGE_PACKS.append(new_pack)
-
+    new_pack = Pack(name=pack_name,
+                    folder=os.path.basename(pack_folder),
+                    categories=str(pack_category),
+                    preview=secure_filename(pack_preview.filename),
+                    images=str([secure_filename(pack_image.filename) for pack_image in pack_images]),
+                    user_id=0,
+                    private=False,
+                    authorized_users=str[1, 2, 3])
+    db.session.add(new_pack)
+    db.session.commit()
     return redirect(url_for('store'))
 
 @app.route('/create-pack', methods=['GET'])
 def create_pack_page():
     return render_template('create_pack.html')
+
+
 if __name__ == "__main__":
     app.run(debug=True)
