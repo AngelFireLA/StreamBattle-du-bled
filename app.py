@@ -23,6 +23,20 @@ from flask_login import current_user, login_user, logout_user, login_required
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, flash, get_flashed_messages, redirect, render_template, request, url_for
+import os
+
+
+from flask import Flask, flash, redirect, render_template, request, url_for, make_response, session, abort
+from flask_login import LoginManager
+from flask_login import UserMixin
+from flask_login import current_user, login_user, logout_user, login_required
+from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import FlaskForm
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+from wtforms import StringField, SubmitField, PasswordField, DateField, SelectField, FileField
+from wtforms.validators import DataRequired, Email, ValidationError
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tournamentsite.db'
@@ -42,12 +56,13 @@ class Pack(db.Model):
     private = db.Column(db.Boolean, nullable=False)
     authorized_users = db.Column(db.String, nullable=False)
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(120), nullable=False)
-    packs = db.Column(db.Text, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    packs = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -55,9 +70,13 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    @login.user_loader
-    def load_user(id):
-        return User.query.get(int(id))
+    def get_id(self):
+        return str(self.id)
+
+@login.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 
 with app.app_context():
     db.create_all()
@@ -72,15 +91,6 @@ if not os.path.exists(os.path.join(app.static_folder, 'tournaments')):
 images_dir = os.path.join(app.static_folder, 'images')
 tournaments_dir = os.path.join(app.static_folder, 'tournaments')
 app.secret_key = "srguzGW2kTdjhqpsUKnG5DyJvvCUk5b9"
-
-import sqlite3
-
-conn = sqlite3.connect('db.sqlite')
-
-cursor = conn.cursor()
-
-cursor.execute(
-    """CREATE TABLE IF NOT EXISTS packs(id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE, nom TEXT, folder TEXT, categories TEXT, preview TEXT, images TEXT)""")
 
 # These variables store the current images being compared (ROUND) and the winners of these comparisons (WINNERS)
 ROUND = []
@@ -157,84 +167,95 @@ def convert_to_rankings(image_list):
     rankings.sort(key=lambda x: x['rank'])
     return rankings
 
-@app.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    form = forms.UpdateProfileForm()
-    if form.validate_on_submit():
-        if current_user.check_password(form.password.data):
-            current_user.email = form.email.data
-            current_user.username = form.name.data
-            db.session.commit()
-            flash('Profile updated')
-            return redirect(url_for('profile'))
-        else:
-            flash('Incorrect password')
-    return render_template('profile.html', form=form, current_user=current_user)
+class RegistrationForm(FlaskForm):
+    name = StringField('Prénom', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Mot de passe', validators=[DataRequired()])
+    submit = SubmitField("S'inscrire")
 
 
-from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, Email
+class LoginForm(FlaskForm):
+    email_or_username = StringField('Email', validators=[DataRequired()])
+    password = PasswordField('Mot de passe', validators=[DataRequired()])
+    submit = SubmitField('Se connecter')
 
 
-class RegistrationForm(FlaskForm): name = StringField('Full Name', validators=[DataRequired()])
-
-
-email = StringField('Email', validators=[DataRequired(), Email()])
-password = PasswordField('Password', validators=[DataRequired()])
-submit = SubmitField('Register')
-
-
-class LoginForm(FlaskForm): email_or_username = StringField('Email or Username', validators=[DataRequired()])
-
-
-password = PasswordField('Password', validators=[DataRequired()])
-submit = SubmitField('Login')
-
-
-class UpdateProfileForm(FlaskForm): name = StringField('Full Name', validators=[DataRequired()])
-
-
-email = StringField('Email', validators=[DataRequired(), Email()])
-password = PasswordField('Enter Password to Confirm Changes', validators=[DataRequired()])
-submit = SubmitField('Save Changes')
+class UpdateProfileForm(FlaskForm):
+    name = StringField('Prénom', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    password = PasswordField('Entrer le mot de passe pour confirmer les changements.', validators=[DataRequired()])
+    submit = SubmitField('Sauvegarder les changements.')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('home'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.name.data, email=form.email.data)
+        user = User(username=form.name.data, email=str(form.email.data).lower())
         user.set_password(form.password.data)
+        existing_user = User.query.filter_by(email=str(form.email.data).lower()).first()
+        if existing_user:
+            flash('Un utilisateur avec la même adresse mail existe déja.', 'error')
+            return redirect(url_for('register'))
         db.session.add(user)
         db.session.commit()
-        flash('Congratulations, you are now a registered user!')
-        return redirect(url_for('login'))
+        session.pop('_flashes', None)
+        flash('Vous avez bien été enregistré!')
+        user = User.query.filter_by(email=str(form.email.data).lower()).first()
+        if user is None or not user.check_password(form.password.data):
+            session.pop('_flashes', None)
+            flash("Erreur, tu n'existe pas dans la base de donnée, comment c'est possible ?")
+            return redirect(url_for('register'))
+        login_user(user)
+        return redirect(url_for('profile'))
     return render_template('register.html', form=form)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('home'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email_or_username.data).first()
-        if user is None:
-            user = User.query.filter_by(username=form.email_or_username.data).first()
+        user = User.query.filter_by(email=str(form.email_or_username.data).lower()).first()
         if user is None or not user.check_password(form.password.data):
-            flash('Invalid email or password')
+            session.pop('_flashes', None)
+            flash('Email ou mot de passe invalide.')
             return redirect(url_for('login'))
         login_user(user)
-        return redirect(url_for('index'))
+        return redirect(url_for('profile'))
     return render_template('login.html', form=form)
+
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    form = UpdateProfileForm()
+    session.pop('_flashes', None)
+    if form.validate_on_submit():
+        if current_user.check_password(form.password.data):
+            user = User.query.filter_by(id=current_user.id).first()
+            if user.email != form.email.data and User.query.filter_by(email=form.email.data).first():
+                session.pop('_flashes', None)
+                flash('Cet email est déja utilisée.')
+            else:
+                user.email = form.email.data
+                user.username = form.name.data
+                db.session.commit()
+                return redirect(url_for('profile'))
+        else:
+            session.pop('_flashes', None)
+            flash('Mot de passe incorrect.')
+    return render_template('profile.html', form=form, current_user=current_user)
+
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out')
+    session.pop('_flashes', None)
+    flash('Vous avez été déconnecté.')
     return redirect(url_for('login'))
 
 

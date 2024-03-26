@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+</head>
+<body>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+<div class="container"><h1>Register</h1>
+    <form method="post" action="{{ url_for('register') }}"> {{ form.csrf_token }}
+        <div class="form-group"><label for="{{ form.name.label.text }}">Prénom et Nom:</label> {{
+            form.name(class="form-control") }}
+        <div class="form-group"><label for="{{ form.email.label.text }}">Email:</label> {{
+            form.email(class="form-control") }}
+        </div>
+        <div class="form-group"><label for="{{ form.password.label.text }}">Mot de passe:</label> {{
+            form.password(class="form-control") }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+</body>
+</html>
