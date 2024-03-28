@@ -1,42 +1,25 @@
+import hashlib
 import json
+import os
 import random
 import re
-from datetime import datetime
-from flask import render_template, request, redirect, url_for, jsonify
-import os
 import shutil
-import hashlib
-from flask import Flask, session
 import zipfile
-from flask import send_file
+from datetime import datetime
+
 import instaloader
 from bing_image_downloader import downloader
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-import os
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_login import current_user, login_user, logout_user, login_required
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask import Flask, flash, get_flashed_messages, redirect, render_template, request, url_for
-import os
-
-
-from flask import Flask, flash, redirect, render_template, request, url_for, make_response, session, abort
+from flask import Flask, flash, render_template, session
+from flask import jsonify
+from flask import send_file
 from flask_login import LoginManager
 from flask_login import UserMixin
 from flask_login import current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-from wtforms import StringField, SubmitField, PasswordField, DateField, SelectField, FileField
-from wtforms.validators import DataRequired, Email, ValidationError
-from datetime import datetime
+from wtforms import StringField, SubmitField, PasswordField
+from wtforms.validators import DataRequired, Email
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tournamentsite.db'
@@ -44,6 +27,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 login = LoginManager(app)
 login.login_view = "login"  #
+
 
 class Pack(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -55,6 +39,7 @@ class Pack(db.Model):
     user_id = db.Column(db.Integer, nullable=False)
     private = db.Column(db.Boolean, nullable=False)
     authorized_users = db.Column(db.String, nullable=False)
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -72,6 +57,7 @@ class User(db.Model, UserMixin):
 
     def get_id(self):
         return str(self.id)
+
 
 @login.user_loader
 def load_user(user_id):
@@ -167,6 +153,7 @@ def convert_to_rankings(image_list):
     rankings.sort(key=lambda x: x['rank'])
     return rankings
 
+
 class RegistrationForm(FlaskForm):
     name = StringField('Prénom', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -174,22 +161,27 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField("S'inscrire")
 
 
-class LoginForm(FlaskForm):
-    email_or_username = StringField('Email', validators=[DataRequired()])
-    password = PasswordField('Mot de passe', validators=[DataRequired()])
-    submit = SubmitField('Se connecter')
 
+
+
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo, Optional
 
 class UpdateProfileForm(FlaskForm):
     name = StringField('Prénom', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Entrer le mot de passe pour confirmer les changements.', validators=[DataRequired()])
+    password = PasswordField('Entrer le mot de passe actuel pour confirmer les changements.', validators=[DataRequired()])
+    new_password = PasswordField('Nouveau mot de passe (optionnel)', validators=[Optional(), EqualTo('confirm', message='Les mots de passe doivent correspondre.')])
+    confirm = PasswordField('Confirmer le nouveau mot de passe', validators=[Optional()])
     submit = SubmitField('Sauvegarder les changements.')
+
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('home'))
+        return redirect(url_for('index'))
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(username=form.name.data, email=str(form.email.data).lower())
@@ -211,43 +203,49 @@ def register():
         return redirect(url_for('profile'))
     return render_template('register.html', form=form)
 
+class LoginForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired()])
+    password = PasswordField('Mot de passe', validators=[DataRequired()])
+    submit = SubmitField('Se connecter')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('home'))
+        return redirect(url_for('index'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=str(form.email_or_username.data).lower()).first()
+        user = User.query.filter_by(email=str(form.email.data).lower()).first()
         if user is None or not user.check_password(form.password.data):
             session.pop('_flashes', None)
             flash('Email ou mot de passe invalide.')
             return redirect(url_for('login'))
         login_user(user)
         return redirect(url_for('profile'))
+    print("didn't validate")
     return render_template('login.html', form=form)
 
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    form = UpdateProfileForm()
-    session.pop('_flashes', None)
+    form = UpdateProfileForm()  # Assuming this form now includes a 'new_password' field
     if form.validate_on_submit():
-        if current_user.check_password(form.password.data):
-            user = User.query.filter_by(id=current_user.id).first()
-            if user.email != form.email.data and User.query.filter_by(email=form.email.data).first():
-                session.pop('_flashes', None)
-                flash('Cet email est déja utilisée.')
+        user = User.query.filter_by(id=current_user.id).first()
+        if user and user.check_password(form.password.data):
+            if form.email.data != current_user.email and User.query.filter_by(email=form.email.data).first():
+                flash('This email is already used.')
             else:
-                user.email = form.email.data
                 user.username = form.name.data
+                user.email = form.email.data
+                if form.new_password.data:  # If a new password is provided
+                    user.set_password(form.new_password.data)
                 db.session.commit()
+                flash('Your profile was updated successfully.')
                 return redirect(url_for('profile'))
         else:
-            session.pop('_flashes', None)
-            flash('Mot de passe incorrect.')
+            flash('Incorrect password.')
     return render_template('profile.html', form=form, current_user=current_user)
+
 
 
 @app.route('/logout')
@@ -310,7 +308,8 @@ def match():
                 with open(os.path.join(tournaments_dir, tournament_file), 'w') as file:
                     json.dump(tournament_data, file, indent=4)
 
-                return render_template('winner.html', winner_image=WINNERS[0], rankings=convert_to_rankings(tournament_data['rankings']))
+                return render_template('winner.html', winner_image=WINNERS[0],
+                                       rankings=convert_to_rankings(tournament_data['rankings']))
             WINNERS = randomize_list(WINNERS)
             ROUND, WINNERS = WINNERS, []
             ROUND = randomize_list(ROUND)
@@ -428,7 +427,7 @@ def download_insta_images(username, max_images=None):
                                      save_metadata=False,
                                      post_metadata_txt_pattern='',
                                      filename_pattern='{date_utc}_UTC')
-    profile = instaloader.Profile.from_username(loader.context, username)
+    p = instaloader.Profile.from_username(loader.context, username)
 
     image_count = 0
 
@@ -437,7 +436,7 @@ def download_insta_images(username, max_images=None):
             # If the post is an image
             if max_images is None or image_count < max_images:
                 # Download the image
-                loader.download_post(post, target=profile.username)
+                loader.download_post(post, target=p.username)
                 image_count += 1
                 if max_images is not None and image_count >= max_images:
                     break
@@ -534,6 +533,20 @@ def get_all_packs():
 
     return IMAGE_PACKS
 
+def get_user_packs(user_id):
+    packs_query = Pack.query.filter_by(user_id=user_id).all()  # Filter packs by user ID
+    user_packs = []
+    for pack in packs_query:
+        pack_dict = {
+            "id": pack.id,
+            "name": pack.name,
+            "category": pack.category,  # Ensure this matches your model
+            "preview": pack.preview,
+            "folder": pack.folder
+        }
+        user_packs.append(pack_dict)
+    return user_packs
+
 
 @app.route('/store')
 def store():
@@ -544,6 +557,7 @@ def store():
         else:
             pack["images"] = []
     return render_template('store.html', packs=packs)
+
 
 @app.route('/add-pack', methods=['POST'])
 def add_pack():
@@ -562,6 +576,7 @@ def add_pack():
     else:
         return jsonify({'status': 'error', 'message': 'Invalid pack ID'}), 400
 
+
 import os
 from flask import request, redirect, url_for
 from werkzeug.utils import secure_filename
@@ -569,6 +584,7 @@ from werkzeug.utils import secure_filename
 
 # Add this function to handle the form submission
 @app.route('/create-pack', methods=['POST'])
+@login_required
 def create_pack():
     pack_name = request.form.get('pack-name')
     if not pack_name:
@@ -602,12 +618,13 @@ def create_pack():
                     categories=str(pack_category),
                     preview=secure_filename(pack_preview.filename),
                     images=str([secure_filename(pack_image.filename) for pack_image in pack_images]),
-                    user_id=0,
+                    user_id=current_user.id,
                     private=False,
-                    authorized_users=str[1, 2, 3])
+                    authorized_users=str([1, 2, 3]))
     db.session.add(new_pack)
     db.session.commit()
     return redirect(url_for('store'))
+
 
 @app.route('/create-pack', methods=['GET'])
 def create_pack_page():

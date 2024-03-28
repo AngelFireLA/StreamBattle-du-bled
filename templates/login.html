@@ -4,7 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(to right, skyblue, blue);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+        }
+        .form-footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
     {% with messages = get_flashed_messages() %}
@@ -16,17 +50,22 @@
             </ul>
         {% endif %}
     {% endwith %}
-<div class="container"><h1>Login</h1>
-    <form method="post" action="{{ url_for('login') }}"> {{ form.csrf_token }}
-        <div class="form-group"><label for="{{ form.email_or_username.label.text }}">Email:</label> {{
-            form.email_or_username(class="form-control") }}
-        </div>
-        <div class="form-group"><label for="{{ form.password.label.text }}">Mot de passe:</label> {{
-            form.password(class="form-control") }}
-        </div>
-        {{ form.submit(class="btn btn-primary") }}
-    </form>
-    <a href="{{ url_for('register') }}" style="font-size: 25px;">Pas de compte ? S'inscrire</a>
-</div>
+    <div class="form-container">
+        <h2>Login</h2>
+        <form method="post" action="/login"> {{ form.csrf_token }}
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+            <div class="form-footer">
+                <a href="/register">Don't have an account? Register</a>
+            </div>
+        </form>
+    </div>
 </body>
 </html>
