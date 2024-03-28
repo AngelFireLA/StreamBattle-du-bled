@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>{{ user.username }}'s Profile</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
     <style>
         body {
             background: linear-gradient(to right, skyblue, blue);
             font-family: 'Arial', sans-serif;
+            padding: 20px;
         }
         .container {
             background: white;
@@ -22,17 +23,11 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        .btn-primary {
-            width: 100%;
-            padding: 10px;
-        }
-
         .packs-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 20px;
         }
-
         .pack-item {
             position: relative;
             background-color: #fff;
@@ -41,82 +36,42 @@
             overflow: hidden;
             transition: transform 0.3s ease;
         }
-
         .pack-item:hover {
             transform: translateY(-5px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-
         .pack-preview {
             width: 100%;
             height: 150px;
             object-fit: cover;
         }
-
         .pack-details {
             padding: 10px;
             text-align: center;
             background-color: #f8f9fa;
         }
-
-        .pack-actions {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-        }
-
-        .add-pack-btn, .preview-icon {
-            font-size: 24px;
-            color: #007bff;
+        /* Adjusted for consistency */
+        .fixed-btn {
+            position: fixed;
+            z-index: 10;
             cursor: pointer;
-            padding: 8px;
-        }
-
-        .add-pack-btn {
-            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            font-size: 30px;
+            border-radius: 50%;
+            transition: transform .3s ease;
             background-color: transparent;
+            color: #007bff;
+            top: 20px;
+            left: 20px;
         }
-                body {
-            background: linear-gradient(to right, skyblue, blue);
-            font-family: 'Arial', sans-serif;
+        .fixed-btn:hover {
+            transform: scale(1.1);
         }
-
-        .pack-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .pack-item {
-            position: relative;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-
-        .pack-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .pack-preview {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-        }
-
-        .pack-details {
-            padding: 10px;
-            text-align: center;
-            background-color: #f8f9fa;
-        }
-
-        .pack-actions {
+                .pack-actions {
             display: flex;
             justify-content: space-between;
             padding: 10px;
@@ -286,49 +241,30 @@
     </style>
 </head>
 <body>
-    <a href="{{ url_for('index') }}" class="fixed-btn" title="Retourner à l'accueil"><i class="fas fa-home"></i></a>
-
-        <div class="container profile-container">
-        <h2>Profile</h2>
-        <form method="post" action="{{ url_for('profile') }}">
-            {{ form.csrf_token }}
-            <div class="form-group">
-                <label for="name">Username (current: {{ current_user.username }}):</label>
-                <input type="text" class="form-control" id="name" name="name" placeholder="New username" value="{{ current_user.username }}" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email (current: {{ current_user.email }}):</label>
-                <input type="email" class="form-control" id="email" name="email" placeholder="New email" value="{{ current_user.email }}" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Current Password (for verification):</label>
-                <input type="password" class="form-control" id="password" name="password" placeholder="Enter current password" required>
-                <small class="form-text text-muted">Enter your current password to save changes.</small>
-            </div>
-            <div class="form-group">
-                <label for="new_password">New Password (optional):</label>
-                <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Enter new password">
-                <small class="form-text text-muted">Fill this only if you want to change your password.</small>
-            </div>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
-        </form>
+    <div class="container">
+        <h2>Profile de {{ user.username }}</h2>
     </div>
-    <div class="pack-container">
+        <a href="{{ url_for('index') }}" class="fixed-btn" title="Retourner à l'accueil"><i class="fas fa-home"></i></a>
+
+    <div class="container packs-container">
+        <h3>Packs</h3>
         {% for pack in user_packs %}
         <div class="pack-item">
-            <img src="{{ url_for('static', filename='packs/' + pack.folder + '/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
+            <img src="{{ url_for('static', filename='packs/' + pack.folder + '/' + pack.preview) }}" alt="{{ pack.name }}" class="pack-preview">
             <div class="pack-details">
-                <h3>{{ pack.name }}</h3>
-                <p>Category: {{ pack.category }}</p>
+                <h4>{{ pack.name }}</h4>
+                <p>{{ pack.category }}</p>
             </div>
-            <div class="pack-actions">
+                        <div class="pack-actions">
                 <button class="add-pack-btn" data-pack-id="{{ pack.id }}"><i class="fas fa-plus"></i></button>
                 <i class="fas fa-eye preview-icon" data-pack-id="{{ pack.id }}"></i>
             </div>
         </div>
+        {% else %}
+        <p>No packs found.</p>
         {% endfor %}
     </div>
-            <div class="preview-popup">
+    <div class="preview-popup">
         <div class="preview-images">
             <!-- Preview images will be added here dynamically -->
         </div>
@@ -401,7 +337,5 @@ createCustomPackBtn.addEventListener('click', () => {
 });
 });
 </script>
-
 </body>
 </html>
-

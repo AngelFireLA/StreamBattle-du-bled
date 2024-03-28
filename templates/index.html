@@ -19,6 +19,14 @@
       align-items: center;
       height: 100vh;
       margin: 0;
+      padding-top: 20px; /* Added space for navbar */
+    }
+
+    .nav {
+      position: absolute;
+      top: 0;
+      right: 0;
+      margin: 20px;
     }
 
     .container {
@@ -33,7 +41,7 @@
       color: white;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, .5);
       font-size: 2.5em;
-      margin-bottom: 20px; /* Adjusted spacing to ensure buttons are below the middle of the text */
+      margin-bottom: 20px;
       animation: fadeInDown 2s ease-out;
     }
 
@@ -42,9 +50,18 @@
       padding: 15px;
       width: 80%;
       max-width: 300px;
-      margin: 10px 0; /* Adjusted for better spacing */
+      margin: 10px 0;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .btn-profile {
+      font-size: 1em;
+            text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
 
     .btn:hover, .btn:focus {
@@ -72,6 +89,9 @@
   </style>
 </head>
 <body>
+  <nav class="nav">
+    <a href="/profile" class="btn btn-primary btn-profile">Profile</a>
+  </nav>
   <div class="container">
     <h1>Tournoi d'images</h1>
     <a href="/start" class="btn btn-primary">Commencer un Tournoi</a>

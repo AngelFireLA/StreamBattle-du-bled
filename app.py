@@ -9,17 +9,21 @@ from datetime import datetime
 
 import instaloader
 from bing_image_downloader import downloader
-from flask import Flask, flash, render_template, session
+from flask import Flask, session, abort
 from flask import jsonify
+from flask import request, redirect, url_for, flash, render_template
 from flask import send_file
 from flask_login import LoginManager
 from flask_login import UserMixin
 from flask_login import current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileRequired, FileAllowed
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, Email
+from werkzeug.utils import secure_filename
+from wtforms import BooleanField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo, Optional
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tournamentsite.db'
@@ -161,23 +165,18 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField("S'inscrire")
 
 
-
-
-
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo, Optional
-
 class UpdateProfileForm(FlaskForm):
     name = StringField('Prénom', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Entrer le mot de passe actuel pour confirmer les changements.', validators=[DataRequired()])
-    new_password = PasswordField('Nouveau mot de passe (optionnel)', validators=[Optional(), EqualTo('confirm', message='Les mots de passe doivent correspondre.')])
+    password = PasswordField('Entrer le mot de passe actuel pour confirmer les changements.',
+                             validators=[DataRequired()])
+    new_password = PasswordField('Nouveau mot de passe (optionnel)', validators=[Optional(), EqualTo('confirm',
+                                                                                                     message='Les mots de passe doivent correspondre.')])
     confirm = PasswordField('Confirmer le nouveau mot de passe', validators=[Optional()])
     submit = SubmitField('Sauvegarder les changements.')
 
 
-
+# noinspection PyArgumentList
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -203,10 +202,12 @@ def register():
         return redirect(url_for('profile'))
     return render_template('register.html', form=form)
 
+
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Mot de passe', validators=[DataRequired()])
     submit = SubmitField('Se connecter')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -221,7 +222,6 @@ def login():
             return redirect(url_for('login'))
         login_user(user)
         return redirect(url_for('profile'))
-    print("didn't validate")
     return render_template('login.html', form=form)
 
 
@@ -229,6 +229,7 @@ def login():
 @login_required
 def profile():
     form = UpdateProfileForm()  # Assuming this form now includes a 'new_password' field
+    user_packs = get_user_packs(current_user.id)  # Fetch user-specific packs
     if form.validate_on_submit():
         user = User.query.filter_by(id=current_user.id).first()
         if user and user.check_password(form.password.data):
@@ -244,8 +245,41 @@ def profile():
                 return redirect(url_for('profile'))
         else:
             flash('Incorrect password.')
-    return render_template('profile.html', form=form, current_user=current_user)
+    return render_template('profile.html', form=form, current_user=current_user, user_packs=user_packs)
 
+@app.route('/user/<int:user_id>')
+def show_user_profile(user_id):
+    # Query the database for the user
+    user = User.query.get(user_id)
+    if not user:
+        abort(404)  # If no user is found, return a 404 error
+    if current_user.is_authenticated:
+        # Fetch all packs that are either public, the user is authorized to view, or the user has created
+        all_packs = Pack.query.filter(
+            (Pack.private == False) |
+            (Pack.user_id == current_user.id) |
+            (Pack.authorized_users.contains(current_user.id))
+        ).all()
+    else:
+        # Fetch only public packs for not authenticated users
+        all_packs = Pack.query.filter_by(private=False).all()
+
+    packs = []
+    for pack in all_packs:
+        pack_folder_path = os.path.join(app.static_folder, f'packs/{pack.folder}')
+        images_list = [image for image in os.listdir(pack_folder_path)] if os.path.exists(pack_folder_path) else []
+
+        pack_dict = {
+            "id": pack.id,
+            "name": pack.name,
+            "category": pack.categories,
+            "folder": pack.folder,
+            "preview": pack.preview,
+            "images": images_list,
+            "private": pack.private,
+        }
+        packs.append(pack_dict)
+    return render_template('user.html', user=user, user_packs=packs)
 
 
 @app.route('/logout')
@@ -519,7 +553,7 @@ def download_bing():
 
 def get_all_packs():
     packs_query = Pack.query.all()  # Retrieve all pack entries from the database
-    IMAGE_PACKS = []
+    image_packs = []
     for pack in packs_query:
         # For each pack, construct a dictionary with the required structure
         pack_dict = {
@@ -529,33 +563,62 @@ def get_all_packs():
             "preview": pack.preview,
             "folder": pack.folder
         }
-        IMAGE_PACKS.append(pack_dict)
+        image_packs.append(pack_dict)
 
-    return IMAGE_PACKS
+    return image_packs
+
 
 def get_user_packs(user_id):
     packs_query = Pack.query.filter_by(user_id=user_id).all()  # Filter packs by user ID
-    user_packs = []
+    packs = []
     for pack in packs_query:
+        pack_folder_path = os.path.join(app.static_folder, f'packs/{pack.folder}')
+        images_list = [image for image in os.listdir(pack_folder_path)] if os.path.exists(pack_folder_path) else []
+
         pack_dict = {
             "id": pack.id,
             "name": pack.name,
-            "category": pack.category,  # Ensure this matches your model
+            "category": pack.categories,
+            "folder": pack.folder,
             "preview": pack.preview,
-            "folder": pack.folder
+            "images": images_list,
+            "private": pack.private,
+            # Include additional attributes as needed
         }
-        user_packs.append(pack_dict)
-    return user_packs
+        packs.append(pack_dict)
+    return packs
+
 
 
 @app.route('/store')
 def store():
-    packs = get_all_packs()
-    for pack in packs:
-        if os.path.exists(os.path.join(app.static_folder, f'packs/{pack["folder"]}')):
-            pack["images"] = [image for image in os.listdir(os.path.join(app.static_folder, f'packs/{pack["folder"]}'))]
-        else:
-            pack["images"] = []
+    if current_user.is_authenticated:
+        # Fetch all packs that are either public, the user is authorized to view, or the user has created
+        all_packs = Pack.query.filter(
+            (Pack.private == False) |
+            (Pack.user_id == current_user.id) |
+            (Pack.authorized_users.contains(current_user.id))
+        ).all()
+    else:
+        # Fetch only public packs for not authenticated users
+        all_packs = Pack.query.filter_by(private=False).all()
+
+    packs = []
+    for pack in all_packs:
+        pack_folder_path = os.path.join(app.static_folder, f'packs/{pack.folder}')
+        images_list = [image for image in os.listdir(pack_folder_path)] if os.path.exists(pack_folder_path) else []
+
+        pack_dict = {
+            "id": pack.id,
+            "name": pack.name,
+            "category": pack.categories,
+            "folder": pack.folder,
+            "preview": pack.preview,
+            "images": images_list,
+            "private": pack.private,
+        }
+        packs.append(pack_dict)
+
     return render_template('store.html', packs=packs)
 
 
@@ -577,58 +640,99 @@ def add_pack():
         return jsonify({'status': 'error', 'message': 'Invalid pack ID'}), 400
 
 
-import os
-from flask import request, redirect, url_for
-from werkzeug.utils import secure_filename
+@app.route('/delete-pack', methods=['POST'])
+@login_required
+def delete_pack():
+    pack_id = request.form.get('packId')
+    try:
+        pack_id = int(pack_id)
+    except ValueError:
+        return jsonify({'status': 'error', 'message': 'Invalid pack ID'}), 400
+
+    pack = Pack.query.get(pack_id)
+    if not pack or pack.user_id != current_user.id:
+        return jsonify({'status': 'error', 'message': 'Pack not found or unauthorized'}), 403
+
+    pack_folder = os.path.join(app.static_folder, 'packs', pack.folder)
+    if os.path.exists(pack_folder):
+        shutil.rmtree(pack_folder)
+
+    db.session.delete(pack)
+    db.session.commit()
+
+    return jsonify({'status': 'success', 'message': 'Pack deleted successfully'})
 
 
-# Add this function to handle the form submission
-@app.route('/create-pack', methods=['POST'])
+class CreatePackForm(FlaskForm):
+    pack_name = StringField('Nom du Pack', validators=[DataRequired()])
+    pack_category = StringField('Catégories', validators=[DataRequired()])
+    pack_preview = FileField('Icone', validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')])
+    pack_images = FileField('Images', validators=[FileRequired(), FileAllowed(['jpg', 'png', 'jpeg'], 'Images only!')],
+                            render_kw={"multiple": True})
+    private = BooleanField('Privé')
+    authorized_users = TextAreaField('Utilisateurs Autorisés (IDs séparés par une virgule)')
+    submit = SubmitField('Créer Pack')
+
+
+@app.route('/create-pack', methods=['GET', 'POST'])
 @login_required
 def create_pack():
-    pack_name = request.form.get('pack-name')
-    if not pack_name:
-        return 'Pack name is required', 400
+    form = CreatePackForm()
+    if form.validate_on_submit():
+        pack_name = form.pack_name.data
+        pack_category = form.pack_category.data
+        pack_preview = form.pack_preview.data
+        pack_images = request.files.getlist('pack_images')  # Ensure the field name matches your HTML form
+        authorized_users = form.authorized_users.data
 
-    pack_category = request.form.get('pack-category')
-    pack_preview = request.files.get('pack-preview')
-    pack_images = request.files.getlist('pack-images')
+        # Processing for privacy and authorized_users
+        is_private = form.private.data
+        authorized_users_ids = [int(user_id.strip()) for user_id in authorized_users.split(',') if
+                                user_id.strip().isdigit()]
 
-    # Create a new folder for the pack
-    pack_folder = os.path.join(app.static_folder, 'packs', secure_filename(pack_name.lower().replace(' ', '_')))
-    os.makedirs(pack_folder, exist_ok=True)
+        # Create a new folder for the pack
+        pack_folder = os.path.join(app.static_folder, 'packs', secure_filename(pack_name.lower().replace(' ', '_')))
+        os.makedirs(pack_folder, exist_ok=True)
+        if is_private == 0:
+            is_private = False
+        else:
+            is_private = True
+        # Save the preview image
+        if pack_preview:
+            preview_filename = secure_filename(pack_preview.filename)
+            pack_preview.save(os.path.join(pack_folder, preview_filename))
+        else:
+            flash('No preview image provided', 'error')
+            return render_template('create_pack.html', form=form)
 
-    # Save the preview image
-    if pack_preview:
-        preview_filename = secure_filename(pack_preview.filename)
-        pack_preview.save(os.path.join(pack_folder, preview_filename))
-    else:
-        return 'No preview image provided', 400
+        # Save the pack images
+        image_filenames = []
+        if pack_images:
+            for image in pack_images:
+                image_filename = secure_filename(image.filename)
+                image.save(os.path.join(pack_folder, image_filename))
+                image_filenames.append(image_filename)
+        else:
+            flash('No images provided for the pack', 'error')
+            return render_template('create_pack.html', form=form)
 
-    # Save the pack images
-    if not pack_images:
-        return 'No images provided for the pack', 400
+        new_pack = Pack(
+            name=pack_name,
+            categories=pack_category,
+            folder=pack_name.lower(),
+            preview=preview_filename,
+            images=str(image_filenames),  # Assuming your Pack model can handle the list of filenames
+            user_id=current_user.id,  # Ensure you have access to current_user
+            private=bool(is_private),
+            authorized_users=str(authorized_users_ids)
+        )
+        db.session.add(new_pack)
+        db.session.commit()
 
-    for image in pack_images:
-        image_filename = secure_filename(image.filename)
-        image.save(os.path.join(pack_folder, image_filename))
-
-    new_pack = Pack(name=pack_name,
-                    folder=os.path.basename(pack_folder),
-                    categories=str(pack_category),
-                    preview=secure_filename(pack_preview.filename),
-                    images=str([secure_filename(pack_image.filename) for pack_image in pack_images]),
-                    user_id=current_user.id,
-                    private=False,
-                    authorized_users=str([1, 2, 3]))
-    db.session.add(new_pack)
-    db.session.commit()
-    return redirect(url_for('store'))
-
-
-@app.route('/create-pack', methods=['GET'])
-def create_pack_page():
-    return render_template('create_pack.html')
+        flash('Pack created successfully!', 'success')
+        return redirect(url_for('store'))
+    print("didn't validate")
+    return render_template('create_pack.html', form=form)
 
 
 if __name__ == "__main__":
