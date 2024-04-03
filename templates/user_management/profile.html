@@ -290,7 +290,7 @@
 
         <div class="container profile-container">
         <h2>Profile</h2>
-        <form method="post" action="{{ url_for('profile') }}">
+        <form method="post" action="{{ url_for('user_management.profile') }}">
             {{ form.csrf_token }}
             <div class="form-group">
                 <label for="name">Username (current: {{ current_user.username }}):</label>
