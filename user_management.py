@@ -149,16 +149,13 @@ def show_user_profile(user_id):
 
     packs = []
     for pack in all_packs:
-        pack_folder_path = os.path.join(user_management.static_folder, f'packs/{pack.folder}')
-        images_list = [image for image in os.listdir(pack_folder_path)] if os.path.exists(pack_folder_path) else []
 
         pack_dict = {
             "id": pack.id,
             "name": pack.name,
             "category": pack.categories,
-            "folder": pack.folder,
             "preview": pack.preview,
-            "images": images_list,
+            "images": pack.images,
             "private": pack.private,
         }
         packs.append(pack_dict)

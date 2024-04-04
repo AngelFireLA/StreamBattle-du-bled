@@ -18,7 +18,6 @@ import shared
 class Pack(shared.db.Model):
     id = shared.db.Column(shared.db.Integer, primary_key=True, autoincrement=True)
     name = shared.db.Column(shared.db.Text, nullable=False)
-    folder = shared.db.Column(shared.db.Text, nullable=False)
     categories = shared.db.Column(shared.db.Text, nullable=False)
     preview = shared.db.Column(shared.db.Text, nullable=False)
     images = shared.db.Column(shared.db.Text, nullable=False)
@@ -35,16 +34,12 @@ def get_user_packs(user_id):
     packs_query = Pack.query.filter_by(user_id=user_id).all()  # Filter packs by user ID
     packs = []
     for pack in packs_query:
-        pack_folder_path = os.path.join(packs_management.static_folder, f'packs/{pack.folder}')
-        images_list = [image for image in os.listdir(pack_folder_path)] if os.path.exists(pack_folder_path) else []
-
         pack_dict = {
             "id": pack.id,
             "name": pack.name,
             "category": pack.categories,
-            "folder": pack.folder,
             "preview": pack.preview,
-            "images": images_list,
+            "images": pack.images,
             "private": pack.private,
             # Include additional attributes as needed
         }
@@ -62,7 +57,6 @@ def get_all_packs():
             "name": pack.name,
             "category": pack.categories,  # Assuming the field is named 'categories' in your model
             "preview": pack.preview,
-            "folder": pack.folder
         }
         image_packs.append(pack_dict)
 
@@ -84,16 +78,12 @@ def store():
 
     packs = []
     for pack in all_packs:
-        pack_folder_path = os.path.join(packs_management.static_folder, f'packs/{pack.folder}')
-        images_list = [image for image in os.listdir(pack_folder_path)] if os.path.exists(pack_folder_path) else []
-
         pack_dict = {
             "id": pack.id,
             "name": pack.name,
             "category": pack.categories,
-            "folder": pack.folder,
             "preview": pack.preview,
-            "images": images_list,
+            "images": pack.images,
             "private": pack.private,
         }
         packs.append(pack_dict)
@@ -157,18 +147,32 @@ def create_pack():
         authorized_users_ids = [int(user_id.strip()) for user_id in authorized_users.split(',') if
                                 user_id.strip().isdigit()]
 
-        # Create a new folder for the pack
-        pack_folder = os.path.join(packs_management.static_folder, 'packs',
-                                   secure_filename(pack_name.lower().replace(' ', '_')))
-        os.makedirs(pack_folder, exist_ok=True)
-        if is_private == 0:
-            is_private = False
-        else:
-            is_private = True
-        # Save the preview image
+        is_private = bool(is_private)
+
+        # Create the Pack object without the images first
+        new_pack = Pack(
+            name=pack_name,
+            categories=pack_category,
+            preview='',  # Temporarily empty
+            images='',  # Temporarily empty
+            user_id=current_user.id,
+            private=is_private,
+            authorized_users=str(authorized_users_ids)
+        )
+
+        # After committing, new_pack.id is available
+        pack_id = new_pack.id
+
+        # Function to save an image and return its filename
+        def save_image(image_file):
+            filename = secure_filename(f"{pack_id}_{pack_name.lower().replace(' ', '_')}_{image_file.filename}")
+            image_file.save(os.path.join(images_dir, filename))
+            return filename
+
+        # Save the preview image and update the Pack object
         if pack_preview:
-            preview_filename = secure_filename(pack_preview.filename)
-            pack_preview.save(os.path.join(pack_folder, preview_filename))
+            preview_filename = save_image(pack_preview)
+            new_pack.preview = preview_filename
         else:
             flash('No preview image provided', 'error')
             return render_template('packs_management/create_pack.html', form=form)
@@ -177,24 +181,14 @@ def create_pack():
         image_filenames = []
         if pack_images:
             for image in pack_images:
-                image_filename = secure_filename(image.filename)
-                image.save(os.path.join(pack_folder, image_filename))
+                image_filename = save_image(image)
                 image_filenames.append(image_filename)
+            new_pack.images = str(image_filenames)
         else:
             flash('No images provided for the pack', 'error')
             return render_template('packs_management/create_pack.html', form=form)
-
-        new_pack = Pack(
-            name=pack_name,
-            categories=pack_category,
-            folder=pack_name.lower(),
-            preview=preview_filename,
-            images=str(image_filenames),  # Assuming your Pack model can handle the list of filenames
-            user_id=current_user.id,  # Ensure you have access to current_user
-            private=bool(is_private),
-            authorized_users=str(authorized_users_ids)
-        )
         shared.db.session.add(new_pack)
+        # Commit the updates to the Pack object
         shared.db.session.commit()
 
         flash('Pack created successfully!', 'success')
@@ -216,10 +210,9 @@ def delete_pack():
     if not pack or pack.user_id != current_user.id:
         return jsonify({'status': 'error', 'message': 'Pack not found or unauthorized'}), 403
 
-    pack_folder = os.path.join(packs_management.static_folder, 'packs', pack.folder)
-    if os.path.exists(pack_folder):
-        shutil.rmtree(pack_folder)
-
+    for image in os.listdir(images_dir):
+        if image.startswith(f"{str(pack_id)}_"):
+            os.remove(os.path.join(images_dir, image))
     shared.db.session.delete(pack)
     shared.db.session.commit()
 

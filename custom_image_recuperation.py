@@ -6,7 +6,7 @@ import instaloader
 from bing_image_downloader import downloader
 from flask import Blueprint, request, jsonify
 
-custom_image_recuperation = Blueprint('custom_image_recuperation', __name__)
+custom_image_recuperation = Blueprint('custom_image_recuperation', __name__, static_folder="static", template_folder="templates")
 
 count_by_images = False  # if instagram image downloader downloads posts or individual images
 

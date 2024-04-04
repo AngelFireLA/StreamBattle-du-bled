@@ -21,7 +21,7 @@ def create_app():
 
     shared.db.init_app(shared.app)  # Bind the database instance to the Flask app
     shared.login.init_app(shared.app)
-    shared.login.login_view = "login"  #
+    shared.login.login_view = "user_management.login"  #
     with shared.app.app_context():
         shared.db.create_all()  # Create database tables if they don't exist
         # register_routes()  # Register routes from other modules
