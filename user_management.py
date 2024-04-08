@@ -149,9 +149,8 @@ def show_user_profile(user_id):
 
     packs = []
     for pack in all_packs:
-
         pack_dict = {
-            "id": pack.id,
+            "id": str(pack.id),
             "name": pack.name,
             "category": pack.categories,
             "preview": pack.preview,

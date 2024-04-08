@@ -34,8 +34,9 @@ def get_user_packs(user_id):
     packs_query = Pack.query.filter_by(user_id=user_id).all()  # Filter packs by user ID
     packs = []
     for pack in packs_query:
+        print(pack.preview)
         pack_dict = {
-            "id": pack.id,
+            "id": str(pack.id),
             "name": pack.name,
             "category": pack.categories,
             "preview": pack.preview,
@@ -79,8 +80,8 @@ def store():
     packs = []
     for pack in all_packs:
         pack_dict = {
-            "id": pack.id,
-            "name": pack.name,
+            "id": str(pack.id),
+            "name": pack.name.lower(),
             "category": pack.categories,
             "preview": pack.preview,
             "images": pack.images,
@@ -139,6 +140,7 @@ def create_pack():
         pack_name = form.pack_name.data
         pack_category = form.pack_category.data
         pack_preview = form.pack_preview.data
+        print(pack_preview)
         pack_images = request.files.getlist('pack_images')  # Ensure the field name matches your HTML form
         authorized_users = form.authorized_users.data
 
@@ -159,23 +161,25 @@ def create_pack():
             private=is_private,
             authorized_users=str(authorized_users_ids)
         )
+        if not pack_preview:
+            flash('No preview image provided', 'error')
+            return render_template('packs_management/create_pack.html', form=form)
+        shared.db.session.add(new_pack)
+        shared.db.session.commit()
 
         # After committing, new_pack.id is available
         pack_id = new_pack.id
 
         # Function to save an image and return its filename
         def save_image(image_file):
-            filename = secure_filename(f"{pack_id}_{pack_name.lower().replace(' ', '_')}_{image_file.filename}")
+            filename = secure_filename(f"{pack_id}_{pack_name}_{image_file.filename}")
             image_file.save(os.path.join(images_dir, filename))
-            return filename
+            return image_file.filename
 
         # Save the preview image and update the Pack object
-        if pack_preview:
-            preview_filename = save_image(pack_preview)
-            new_pack.preview = preview_filename
-        else:
-            flash('No preview image provided', 'error')
-            return render_template('packs_management/create_pack.html', form=form)
+        preview_filename = save_image(pack_preview)
+        print(preview_filename)
+        new_pack.preview = preview_filename
 
         # Save the pack images
         image_filenames = []

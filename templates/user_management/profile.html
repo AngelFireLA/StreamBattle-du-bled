@@ -316,7 +316,12 @@
     <div class="pack-container">
         {% for pack in user_packs %}
         <div class="pack-item">
-            <img src="{{ url_for('static', filename='packs/' + pack.folder + '/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
+
+            <img src="{{ url_for('static', filename='images/' + pack.id + '_'+ pack.name + '_' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
+                <script>
+        console.log("Filename: images/{{ pack.id }}_{{ pack.name }}_{{ pack.preview }}");
+        console.log("images/{{ pack.preview }}");
+    </script>
             <div class="pack-details">
                 <h3>{{ pack.name }}</h3>
                 <p>Category: {{ pack.category }}</p>

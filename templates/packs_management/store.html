@@ -200,7 +200,7 @@
     <div class="pack-container">
         {% for pack in packs %}
         <div class="pack-item">
-            <img src="{{ url_for('static', filename='packs/' + pack.folder + '/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
+            <img src="{{ url_for('static', filename='images/' + pack.id + '_'+ pack.name + '_' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
             <div class="pack-details">
                 <h3>{{ pack.name }}</h3>
                 <p>Category: {{ pack.category }}</p>
@@ -219,6 +219,11 @@
         </div>
         <span class="close-preview">&times;</span>
     </div>
+    <script type="text/javascript">
+    // Define a base URL for static files
+    var staticBaseUrl = "{{ url_for('static', filename='') }}";
+</script>
+
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script>
@@ -254,15 +259,15 @@ document.addEventListener('DOMContentLoaded', function () {
             previewIcons.forEach(i => i.classList.remove('active-preview')); // Remove active class from all icons
             this.classList.add('active-preview'); // Add active class to the current icon
 
-            const pack = {{ packs | tojson }}.find(p => p.id == packId);
-            previewImages.innerHTML = '';
-            pack.images.forEach(image => {
-                const previewImage = document.createElement('img');
-                previewImage.src = "{{ url_for('static', filename='packs/') }}" + pack.folder + '/' + image;
-                previewImage.alt = image;
-                previewImage.classList.add('preview-image');
-                previewImages.appendChild(previewImage);
-            });
+        const pack = packs.find(p => p.id == packId);
+        previewImages.innerHTML = '';
+        pack.images.forEach(image => {
+            const previewImage = document.createElement('img');
+            // Use the staticBaseUrl to construct the correct path
+            previewImage.src = staticBaseUrl + 'images/' + pack.id + '_' + pack.name + '_' + image;
+            previewImage.alt = image;
+            previewImages.appendChild(previewImage);
+        });
 
             previewPopup.classList.add('show');
         });
@@ -286,9 +291,5 @@ createCustomPackBtn.addEventListener('click', () => {
 });
 });
 </script>
-
-
-
-
 </body>
 </html>

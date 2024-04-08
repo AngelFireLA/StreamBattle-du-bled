@@ -2,7 +2,7 @@ import os
 
 from flask import Blueprint, render_template, request, jsonify
 
-managing = Blueprint("managing", __name__)
+managing = Blueprint("managing", __name__, static_folder="static", template_folder="templates")
 
 @managing.route('/manage')
 def manage():
