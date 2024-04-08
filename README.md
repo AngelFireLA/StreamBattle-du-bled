@@ -8,3 +8,5 @@ The current round and match number is always shown until the winner.
 For each match you will be shown 2 images and you just need to click on who you want to be this match's winner, and then repeat until one image left.
 Automatically handles any number of images, even odd ones.
 At the end you can download every image that achieved a specific rank.
+
+https://docs.google.com/document/d/1CT0O3DQi3v-sqPLBRZodHb-AbbDvNSS_40fwg-nQM_0/edit
