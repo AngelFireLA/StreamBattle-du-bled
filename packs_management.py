@@ -7,12 +7,12 @@ from flask import request, redirect, url_for, flash, render_template
 from flask_login import current_user, login_required
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired, FileAllowed
-from werkzeug.utils import secure_filename
 from wtforms import BooleanField, TextAreaField
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
 import shared
+import ast
 
 
 class Pack(shared.db.Model):
@@ -40,7 +40,7 @@ def get_user_packs(user_id):
             "name": pack.name,
             "category": pack.categories,
             "preview": pack.preview,
-            "images": pack.images,
+            "images": ast.literal_eval(pack.images),
             "private": pack.private,
             # Include additional attributes as needed
         }
@@ -81,10 +81,10 @@ def store():
     for pack in all_packs:
         pack_dict = {
             "id": str(pack.id),
-            "name": pack.name.lower(),
+            "name": pack.name,
             "category": pack.categories,
             "preview": pack.preview,
-            "images": pack.images,
+            "images": ast.literal_eval(pack.images),
             "private": pack.private,
         }
         packs.append(pack_dict)
@@ -138,6 +138,7 @@ def create_pack():
     form = CreatePackForm()
     if form.validate_on_submit():
         pack_name = form.pack_name.data
+        print(pack_name)
         pack_category = form.pack_category.data
         pack_preview = form.pack_preview.data
         print(pack_preview)
@@ -172,7 +173,7 @@ def create_pack():
 
         # Function to save an image and return its filename
         def save_image(image_file):
-            filename = secure_filename(f"{pack_id}_{pack_name}_{image_file.filename}")
+            filename = f"{pack_id}_{pack_name}_{image_file.filename}"
             image_file.save(os.path.join(images_dir, filename))
             return image_file.filename
 

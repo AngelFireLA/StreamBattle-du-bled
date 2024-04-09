@@ -8,7 +8,7 @@ managing = Blueprint("managing", __name__, static_folder="static", template_fold
 def manage():
     images = os.listdir(os.path.join(managing.static_folder, 'images'))
     images = [img for img in images]
-    return render_template('tournament/manage.html', images=images)
+    return render_template('tournament_management/manage.html', images=images)
 
 
 @managing.route('/delete-image', methods=['POST'])

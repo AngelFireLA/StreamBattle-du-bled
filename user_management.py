@@ -24,6 +24,9 @@ class User(shared.db.Model, UserMixin):
     password_hash = shared.db.Column(shared.db.String(128), nullable=False)
     packs = shared.db.Column(shared.db.Text)
     is_active = shared.db.Column(shared.db.Boolean, default=True)
+    current_tournament = shared.db.Column(shared.db.Integer)
+    tournaments = shared.db.Column(shared.db.Text)
+    current_image = shared.db.Column(shared.db.Text)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
