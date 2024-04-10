@@ -316,7 +316,10 @@
     <div class="pack-container">
         {% for pack in user_packs %}
         <div class="pack-item">
-            <img src="{{ url_for('static', filename='packs/' + pack.folder + '/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
+
+            <img src="{{ url_for('static', filename='images/' + pack.id + '_'+ pack.name + '_' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
+                <script>
+    </script>
             <div class="pack-details">
                 <h3>{{ pack.name }}</h3>
                 <p>Category: {{ pack.category }}</p>
@@ -373,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function () {
             previewImages.innerHTML = '';
             pack.images.forEach(image => {
                 const previewImage = document.createElement('img');
-                previewImage.src = "{{ url_for('static', filename='packs/') }}" + pack.folder + '/' + image;
+                previewImage.src = "{{ url_for('static', filename='images/') }}"  + pack.id + '_'+ pack.name + '_' + image;
                 previewImage.alt = image;
                 previewImage.classList.add('preview-image');
                 previewImages.appendChild(previewImage);
@@ -395,10 +398,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-const createCustomPackBtn = document.querySelector('.create-custom-pack-btn');
-createCustomPackBtn.addEventListener('click', () => {
-    window.location.href = '/create-pack'; // Navigate to the create pack page
-});
 });
 </script>
 

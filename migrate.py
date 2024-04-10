@@ -1,5 +1,4 @@
 from flask import Flask
 from flask_migrate import Migrate
-from app import app, db
+from shared import app, db
 
-migrate = Migrate(app, db)

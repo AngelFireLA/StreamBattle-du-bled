@@ -2,13 +2,13 @@ import os
 
 from flask import Blueprint, render_template, request, jsonify
 
-managing = Blueprint("managing", __name__)
+managing = Blueprint("managing", __name__, static_folder="static", template_folder="templates")
 
 @managing.route('/manage')
 def manage():
     images = os.listdir(os.path.join(managing.static_folder, 'images'))
     images = [img for img in images]
-    return render_template('tournament/manage.html', images=images)
+    return render_template('tournament_management/manage.html', images=images)
 
 
 @managing.route('/delete-image', methods=['POST'])

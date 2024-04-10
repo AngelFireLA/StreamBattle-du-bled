@@ -94,9 +94,9 @@
   </nav>
   <div class="container">
     <h1>Tournoi d'images</h1>
-    <a href="/start" class="btn btn-primary">Commencer un Tournoi</a>
-    <a href="/manage" class="btn btn-secondary">Gestion des Images</a>
-    <a href="/store" class="btn btn-secondary">Utiliser des packs Images</a>
+    <a href="{{ url_for('tournament_management.start_quick_tournament') }}" class="btn btn-primary">Commencer un Tournoi rapide</a>
+    <a href="{{ url_for('managing.manage') }}" class="btn btn-secondary">Gestion des Images</a>
+    <a href="{{ url_for('packs_management.store') }}" class="btn btn-secondary">Utiliser des packs Images</a>
   </div>
 </body>
 </html>
