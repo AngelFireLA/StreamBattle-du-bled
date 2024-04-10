@@ -1,8 +1,11 @@
+import io
 import os
 import re
 import shutil
+from urllib.request import urlopen
 
 import instaloader
+import requests
 from bing_image_downloader import downloader
 from flask import Blueprint, request, jsonify
 
@@ -75,6 +78,86 @@ def download_instagram_images_route():
 
     # Remove the now-empty Instagram folder
     shutil.rmtree(instagram_folder_path)
+
+    return jsonify({'status': 'downloaded'})
+
+def mal_request(pseudo):
+    CLIENT_ID = '5a433618d10417e64a676117051f6c86'
+
+    url = f'https://api.myanimelist.net/v2/users/{pseudo}/animelist?fields=list_status&limit=999&status=completed'
+
+    response = requests.get(url, headers={
+        'X-MAL-CLIENT-ID': CLIENT_ID
+    })
+
+    response.raise_for_status()
+    anime_list = response.json()
+    response.close()
+    return anime_list
+
+def get_score(anime: list):
+    return int(anime["list_status"]["score"])
+
+
+def get_name(anime: list):
+    return anime["node"]["title"]
+
+def getanimes(pseudo) -> dict:
+    anime_list = mal_request(pseudo)
+    actual_anime_list = {}
+    for anime in anime_list['data']:
+        actual_anime_list[get_name(anime)] = anime
+    actual_anime_list = dict(sorted(actual_anime_list.items(), key=lambda x: get_score(x[1]), reverse=True))
+    return actual_anime_list
+
+
+def get_images(pseudo):
+    actual_anime_list = list(getanimes(pseudo).values())
+    anime_covers = {}
+    for anime in actual_anime_list:
+        anime_covers[get_name(anime)] = anime["node"]["main_picture"]["medium"]
+    return anime_covers
+
+def get_image_from_web(link):
+    image_str = urlopen(link).read()
+    image_file = io.BytesIO(image_str)
+    return image_file
+
+def download_mal_images(username, max_images=None):
+    i = 0
+    for k, v in get_images(username).items():
+        if i == max_images:
+            break
+        i+=1
+        image_object = get_image_from_web(v)
+        with open(os.path.join(custom_image_recuperation.static_folder+"/images", v.split('/')[-1]), "wb") as f:
+            f.write(image_object.getbuffer())
+
+@custom_image_recuperation.route('/download-mal', methods=['POST'])
+def download_mal_images_route():
+    username = request.form['username']
+    max_images = int(request.form['count'])
+    if max_images == 69:
+        print("downloading every image")
+        max_images = None
+    # Use the download_images function to download images
+    print("aa")
+    download_mal_images(username, max_images)
+
+    # # The path where downloaded images are stored
+    # mal_folder_path = os.path.join(os.getcwd(), username)
+    #
+    # # Target path to move images to
+    # target_folder_path = os.path.join(custom_image_recuperation.static_folder, 'images')
+    #
+    # # Moving the images to the 'images' folder
+    # for image_file in os.listdir(mal_folder_path):
+    #     source_path = os.path.join(mal_folder_path, image_file)
+    #     target_path = os.path.join(target_folder_path, image_file)
+    #     shutil.move(source_path, target_path)
+    #
+    # # Remove the now-empty Instagram folder
+    # shutil.rmtree(mal_folder_path)
 
     return jsonify({'status': 'downloaded'})
 

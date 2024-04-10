@@ -12,6 +12,7 @@ import shared
 from managing import managing
 from packs_management import packs_management
 from user_management import user_management
+from custom_image_recuperation import custom_image_recuperation
 
 
 def create_app():
@@ -34,6 +35,7 @@ app.secret_key = "srguzGW2kTdjhqpsUKnG5DyJvvCUk5b9"
 app.register_blueprint(user_management, url_prefix="")
 app.register_blueprint(packs_management, url_prefix="")
 app.register_blueprint(managing, url_prefix="")
+app.register_blueprint(custom_image_recuperation, url_prefix="")
 
 with app.app_context():
     shared.db.create_all()

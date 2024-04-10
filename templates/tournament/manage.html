@@ -10,7 +10,7 @@
 
     <style>
         body {
-          background: linear-gradient(to right, skyblue, blue);
+          background: linear-gradient(to right, skyblue, purple);
         }
         .image-grid {
           display: grid;
@@ -251,6 +251,12 @@ input:checked + .slider:before {
         <input class="input w-1/6" id="bing-image-count" max="75" min="1" placeholder="Nb d'images" type="number">
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-1/6" onclick="downloadBingImages()">Télécharger depuis Bing</button>
     </div>
+
+        <div class="flex flex-col md:flex-row gap-2 items-center">
+        <input class="input w-2/3" id="mal-username" placeholder="Pseudo MyAnimeList" type="text">
+        <input class="input w-1/6" id="mal-image-count" max="75" min="1" placeholder="Nb d'images" type="number">
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-1/6" onclick="downloadMalImages()">Télécharger depuis MAL</button>
+    </div>
 </div>
 
 <!-- Conteneur pour le bouton de floutage et le texte -->
@@ -306,8 +312,22 @@ function downloadBingImages() {
         btn.disabled = false; // Enable the button again
     });
 }
+function downloadMalImages() {
+    var btn = document.querySelector('button[onclick="downloadMalImages()"]');
+    var originalText = btn.innerHTML; // Save the original button text
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Téléchargement...';
+    btn.disabled = true; // Disable the button to prevent multiple clicks
 
+    var username = document.getElementById('mal-username').value;
+    var count = document.getElementById('mal-image-count').value;
 
+    $.post('/download-mal', {username: username, count: count}, function(response) {
+        location.reload(); // The page will reload, reverting the button back to its original state
+    }).fail(function() {
+        btn.innerHTML = originalText; // In case of failure, revert button text
+        btn.disabled = false; // Enable the button again
+    });
+}
     function deleteAllImages() {
       $.post('/delete-all-images', function(response) {
         location.reload();
