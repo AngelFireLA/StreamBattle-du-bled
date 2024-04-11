@@ -1,13 +1,26 @@
+import ast
 import os
 
 from flask import Blueprint, render_template, request, jsonify
+from flask_login import current_user, login_user, logout_user, login_required
+
+import shared
+from class_utils import User
 
 managing = Blueprint("managing", __name__, static_folder="static", template_folder="templates")
 
 @managing.route('/manage')
+@login_required
 def manage():
-    images = os.listdir(os.path.join(managing.static_folder, 'images'))
-    images = [img for img in images]
+    user = User.query.get(current_user.id)
+    if user.current_images:
+        formatted_string = '["' + '","'.join(user.current_images.split(',')) + '"]'
+        if not formatted_string == '[""]':
+            images = ast.literal_eval(formatted_string)
+        else:
+            images = []
+    else:
+        images = []
     return render_template('tournament_management/manage.html', images=images)
 
 
@@ -30,7 +43,7 @@ def upload_images():
 
 @managing.route('/delete-all-images', methods=['POST'])
 def delete_all_images():
-    image_dir = os.path.join(managing.static_folder, 'images')
-    for image in os.listdir(image_dir):
-        os.remove(os.path.join(managing.static_folder, 'images', image))
+    user = User.query.get(current_user.id)
+    user.current_images = ""
+    shared.db.session.commit()
     return jsonify({'status': 'all_deleted'})

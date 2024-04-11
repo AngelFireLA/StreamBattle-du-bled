@@ -200,7 +200,7 @@
     <div class="pack-container">
         {% for pack in packs %}
         <div class="pack-item">
-            <img src="{{ url_for('static', filename='images/' + pack.id + '_'+ pack.name + '_' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
+            <img src="{{ url_for('static', filename='images/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
             <div class="pack-details">
                 <h3>{{ pack.name }}</h3>
                 <p>Category: {{ pack.category }}</p>
@@ -259,11 +259,11 @@ document.addEventListener('DOMContentLoaded', function () {
             previewIcons.forEach(i => i.classList.remove('active-preview')); // Remove active class from all icons
             this.classList.add('active-preview'); // Add active class to the current icon
 
-            const pack = {{ user_packs | tojson }}.find(p => p.id == packId);
+            const pack = {{ packs | tojson }}.find(p => p.id == packId);
             previewImages.innerHTML = '';
             pack.images.forEach(image => {
                 const previewImage = document.createElement('img');
-                previewImage.src = "{{ url_for('static', filename='images/') }}"  + pack.id + '_'+ pack.name + '_' + image;
+                previewImage.src = "{{ url_for('static', filename='images/') }}"  + image;
                 previewImage.alt = image;
                 previewImage.classList.add('preview-image');
                 previewImages.appendChild(previewImage);

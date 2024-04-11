@@ -11,31 +11,14 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Optional
 
 import shared
-from packs_management import Pack
+from class_utils import Pack
 from packs_management import get_user_packs
+from class_utils import User
 
 user_management = Blueprint("user_management", __name__, static_folder="static", template_folder="templates")
 
 
-class User(shared.db.Model, UserMixin):
-    id = shared.db.Column(shared.db.Integer, primary_key=True, autoincrement=True)
-    username = shared.db.Column(shared.db.String(80), nullable=False)
-    email = shared.db.Column(shared.db.String(120), unique=True, nullable=False)
-    password_hash = shared.db.Column(shared.db.String(128), nullable=False)
-    packs = shared.db.Column(shared.db.Text)
-    is_active = shared.db.Column(shared.db.Boolean, default=True)
-    current_tournament = shared.db.Column(shared.db.Integer)
-    tournaments = shared.db.Column(shared.db.Text)
-    current_image = shared.db.Column(shared.db.Text)
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    def get_id(self):
-        return str(self.id)
 
 
 @shared.login.user_loader

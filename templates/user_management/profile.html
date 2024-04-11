@@ -317,7 +317,7 @@
         {% for pack in user_packs %}
         <div class="pack-item">
 
-            <img src="{{ url_for('static', filename='images/' + pack.id + '_'+ pack.name + '_' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
+            <img src="{{ url_for('static', filename='images/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
                 <script>
     </script>
             <div class="pack-details">
@@ -376,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function () {
             previewImages.innerHTML = '';
             pack.images.forEach(image => {
                 const previewImage = document.createElement('img');
-                previewImage.src = "{{ url_for('static', filename='images/') }}"  + pack.id + '_'+ pack.name + '_' + image;
+                previewImage.src = "{{ url_for('static', filename='images/') }}"  image;
                 previewImage.alt = image;
                 previewImage.classList.add('preview-image');
                 previewImages.appendChild(previewImage);

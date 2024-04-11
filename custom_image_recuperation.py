@@ -2,12 +2,19 @@ import io
 import os
 import re
 import shutil
+import time
 from urllib.request import urlopen
 
 import instaloader
 import requests
 from bing_image_downloader import downloader
 from flask import Blueprint, request, jsonify
+import uuid
+
+from flask_login import current_user
+
+import shared
+from class_utils import User
 
 custom_image_recuperation = Blueprint('custom_image_recuperation', __name__, static_folder="static", template_folder="templates")
 
@@ -50,8 +57,14 @@ def download_bing_images(search_term, number_of_images, download_path=''):
     :param number_of_images: The number of images to download.
     :param download_path: The directory path where the images will be saved. Defaults to 'downloaded_images'.
     """
-    print(download_path, number_of_images, search_term)
     downloader.download(search_term, limit=number_of_images, output_dir=download_path)
+
+def safe_name(image_name:str, type_of_image:str)-> str:
+    #rename an image with the original with the type of image, the original name of the image, and a way to not make it overwrite a previous image, making the name unique
+    timestamp = int(time.time() * 1000)
+    unique_id = uuid.uuid4()
+    safe_image_name = f"{type_of_image}_{image_name}_{timestamp}_{unique_id}.png"
+    return safe_image_name
 
 
 @custom_image_recuperation.route('/download-instagram', methods=['POST'])
@@ -69,13 +82,19 @@ def download_instagram_images_route():
 
     # Target path to move images to
     target_folder_path = os.path.join(custom_image_recuperation.static_folder, 'images')
-
+    user = User.query.get(current_user.id)
     # Moving the images to the 'images' folder
     for image_file in os.listdir(instagram_folder_path):
-        source_path = os.path.join(instagram_folder_path, image_file)
-        target_path = os.path.join(target_folder_path, image_file)
-        shutil.move(source_path, target_path)
 
+        source_path = os.path.join(instagram_folder_path, image_file)
+        safe_image_file = safe_name(image_file, "instagram_"+username)
+        target_path = os.path.join(target_folder_path, safe_image_file)
+        shutil.move(source_path, target_path)
+        if user.current_images:
+            user.current_images += ',' + safe_image_file
+        else:
+            user.current_images = image_file
+    shared.db.session.commit()
     # Remove the now-empty Instagram folder
     shutil.rmtree(instagram_folder_path)
 
@@ -123,16 +142,28 @@ def get_image_from_web(link):
     image_file = io.BytesIO(image_str)
     return image_file
 
+
 def download_mal_images(username, max_images=None):
     i = 0
+    user = User.query.get(current_user.id)
     for k, v in get_images(username).items():
         if i == max_images:
             break
-        i+=1
+        i += 1
         image_object = get_image_from_web(v)
-        with open(os.path.join(custom_image_recuperation.static_folder+"/images", v.split('/')[-1]), "wb") as f:
-            f.write(image_object.getbuffer())
+        image_name = v.split('/')[-1]
 
+        safe_image_name = safe_name(image_name, "mal")
+
+        save_path = os.path.join(custom_image_recuperation.static_folder, "images", safe_image_name)
+
+        with open(save_path, "wb") as f:
+            f.write(image_object.getbuffer())
+        if user.current_images:
+            user.current_images += ',' + safe_image_name
+        else:
+            user.current_images = safe_image_name
+    shared.db.session.commit()
 @custom_image_recuperation.route('/download-mal', methods=['POST'])
 def download_mal_images_route():
     username = request.form['username']
@@ -141,23 +172,7 @@ def download_mal_images_route():
         print("downloading every image")
         max_images = None
     # Use the download_images function to download images
-    print("aa")
     download_mal_images(username, max_images)
-
-    # # The path where downloaded images are stored
-    # mal_folder_path = os.path.join(os.getcwd(), username)
-    #
-    # # Target path to move images to
-    # target_folder_path = os.path.join(custom_image_recuperation.static_folder, 'images')
-    #
-    # # Moving the images to the 'images' folder
-    # for image_file in os.listdir(mal_folder_path):
-    #     source_path = os.path.join(mal_folder_path, image_file)
-    #     target_path = os.path.join(target_folder_path, image_file)
-    #     shutil.move(source_path, target_path)
-    #
-    # # Remove the now-empty Instagram folder
-    # shutil.rmtree(mal_folder_path)
 
     return jsonify({'status': 'downloaded'})
 
@@ -172,12 +187,21 @@ def download_bing_images_route():
 
     # Use the download_images function to download images
     download_bing_images(keywords, max_images, target_folder_path)
-    instagram_folder_path = os.path.join(target_folder_path, keywords)
-    for image_file in os.listdir(instagram_folder_path):
-        source_path = os.path.join(instagram_folder_path, image_file)
-        target_path = os.path.join(target_folder_path, image_file)
+    bing_folder_path = os.path.join(target_folder_path, keywords)
+    user = User.query.get(current_user.id)
+    # Moving the images to the 'images' folder
+    for image_file in os.listdir(bing_folder_path):
+
+        source_path = os.path.join(bing_folder_path, image_file)
+        safe_image_file = safe_name(image_file, "instagram_" + keywords)
+        target_path = os.path.join(target_folder_path, safe_image_file)
+        if user.current_images:
+            user.current_images += ',' + safe_image_file
+        else:
+            user.current_images = safe_image_file
         shutil.move(source_path, target_path)
+    shared.db.session.commit()
 
     # Remove the now-empty Instagram folder
-    shutil.rmtree(instagram_folder_path)
+    shutil.rmtree(bing_folder_path)
     return jsonify({'status': 'downloaded'})

@@ -10,20 +10,12 @@ from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import BooleanField, TextAreaField
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
-
 import shared
 import ast
 
+from class_utils import Pack
+from class_utils import User
 
-class Pack(shared.db.Model):
-    id = shared.db.Column(shared.db.Integer, primary_key=True, autoincrement=True)
-    name = shared.db.Column(shared.db.Text, nullable=False)
-    categories = shared.db.Column(shared.db.Text, nullable=False)
-    preview = shared.db.Column(shared.db.Text, nullable=False)
-    images = shared.db.Column(shared.db.Text, nullable=False)
-    user_id = shared.db.Column(shared.db.Integer, nullable=False)
-    private = shared.db.Column(shared.db.Boolean, nullable=False)
-    authorized_users = shared.db.Column(shared.db.String, nullable=False)
 
 
 packs_management = Blueprint("packs_management", __name__, static_folder="static", template_folder="templates")
@@ -34,7 +26,6 @@ def get_user_packs(user_id):
     packs_query = Pack.query.filter_by(user_id=user_id).all()  # Filter packs by user ID
     packs = []
     for pack in packs_query:
-        print(pack.preview)
         pack_dict = {
             "id": str(pack.id),
             "name": pack.name,
@@ -54,10 +45,12 @@ def get_all_packs():
     for pack in packs_query:
         # For each pack, construct a dictionary with the required structure
         pack_dict = {
-            "id": pack.id,
+            "id": str(pack.id),
             "name": pack.name,
-            "category": pack.categories,  # Assuming the field is named 'categories' in your model
+            "category": pack.categories,
             "preview": pack.preview,
+            "images": ast.literal_eval(pack.images),
+            "private": pack.private,
         }
         image_packs.append(pack_dict)
 
@@ -65,6 +58,7 @@ def get_all_packs():
 
 
 @packs_management.route('/store')
+@login_required
 def store():
     if current_user.is_authenticated:
         # Fetch all packs that are either public, the user is authorized to view, or the user has created
@@ -79,6 +73,7 @@ def store():
 
     packs = []
     for pack in all_packs:
+        print(pack.images)
         pack_dict = {
             "id": str(pack.id),
             "name": pack.name,
@@ -104,22 +99,39 @@ def rename_file(directory, file_name):
 
 
 @packs_management.route('/add-pack', methods=['POST'])
+@login_required
 def add_pack():
     pack_id = request.form.get('packId')
-    pack = next((pack for pack in get_all_packs() if pack['id'] == int(pack_id)), None)
-
-    if pack:
-        for image in os.listdir(os.path.join(packs_management.static_folder, f'packs/{pack["folder"]}')):
-            image_path = os.path.join(packs_management.static_folder, f'packs/{pack["folder"]}', image)
-            if not os.path.exists(image_path):
-                print(f"Image '{image}' does not exist in the 'images' folder.")
-            else:
-                shutil.copy(image_path, os.path.join(images_dir, image))
-
-        return jsonify({'status': 'success'})
-    else:
+    try:
+        pack_id = int(pack_id)  # Ensures that pack_id is an integer
+    except ValueError:
         return jsonify({'status': 'error', 'message': 'Invalid pack ID'}), 400
 
+    pack = convert_pack_to_dict(Pack.query.get(pack_id))
+    if pack:
+        user = User.query.get(current_user.id)
+        image_paths = ','.join([image for image in pack["images"]])
+        if user.current_images:
+            user.current_images += ',' + image_paths
+        else:
+            user.current_images = image_paths
+        print("added pack")
+        shared.db.session.commit()
+        return jsonify({'status': 'success'})
+    else:
+        print("invalid pack")
+        return jsonify({'status': 'error', 'message': 'Invalid pack ID'}), 400
+
+def convert_pack_to_dict(pack: Pack):
+    pack_dict = {
+        "id": str(pack.id),
+        "name": pack.name,
+        "category": pack.categories,
+        "preview": pack.preview,
+        "images": ast.literal_eval(pack.images),
+        "private": pack.private,
+    }
+    return pack_dict
 
 class CreatePackForm(FlaskForm):
     pack_name = StringField('Nom du Pack', validators=[DataRequired()])
@@ -175,11 +187,10 @@ def create_pack():
         def save_image(image_file):
             filename = f"{pack_id}_{pack_name}_{image_file.filename}"
             image_file.save(os.path.join(images_dir, filename))
-            return image_file.filename
+            return filename
 
         # Save the preview image and update the Pack object
         preview_filename = save_image(pack_preview)
-        print(preview_filename)
         new_pack.preview = preview_filename
 
         # Save the pack images
