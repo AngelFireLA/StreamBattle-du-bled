@@ -29,9 +29,13 @@ def delete_image():
     image_name = request.form['image']
     image_path = os.path.join(managing.static_folder, 'images', image_name)
     os.remove(image_path)
-
-    return jsonify({'status': 'moved'})
-
+    user = User.query.get(current_user.id)
+    print(user.current_images)
+    user.current_images = user.current_images.replace(image_name + ',', '')
+    print()
+    print(user.current_images)
+    shared.db.session.commit()
+    return jsonify({'status': 'deleted'})
 
 @managing.route('/upload-images', methods=['POST'])
 def upload_images():

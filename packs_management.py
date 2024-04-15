@@ -226,8 +226,9 @@ def delete_pack():
     if not pack or pack.user_id != current_user.id:
         return jsonify({'status': 'error', 'message': 'Pack not found or unauthorized'}), 403
 
+
     for image in os.listdir(images_dir):
-        if image.startswith(f"{str(pack_id)}_"):
+        if image.startswith(f"{pack_id}_"):
             os.remove(os.path.join(images_dir, image))
     shared.db.session.delete(pack)
     shared.db.session.commit()

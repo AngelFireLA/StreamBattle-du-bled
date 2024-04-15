@@ -2,14 +2,20 @@ import io
 import os
 import re
 import shutil
+import textwrap
 import time
 from urllib.request import urlopen
 
 import instaloader
 import requests
+from PIL import Image
 from bing_image_downloader import downloader
 from flask import Blueprint, request, jsonify
 import uuid
+import PIL
+import io
+from urllib.request import urlopen
+from PIL import Image, ImageDraw, ImageFont
 
 from flask_login import current_user
 
@@ -137,10 +143,50 @@ def get_images(pseudo):
         anime_covers[get_name(anime)] = anime["node"]["main_picture"]["medium"]
     return anime_covers
 
-def get_image_from_web(link):
+def get_image_from_web(link, anime_name, padding_height=100):
+    # Fetch and load the image
     image_str = urlopen(link).read()
     image_file = io.BytesIO(image_str)
-    return image_file
+    img = Image.open(image_file)
+
+    # Create a new image with white padding
+    new_img = Image.new('RGB', (img.width, img.height + padding_height), 'white')
+    new_img.paste(img, (0, 0))
+
+    # Initialize drawing context
+    draw = ImageDraw.Draw(new_img)
+
+    # Select font
+    try:
+        font = ImageFont.truetype("arial.ttf", 24)  # Start with a reasonable font size
+    except IOError:
+        font = ImageFont.load_default()
+
+    # Initialize variables for text fitting
+    text = anime_name
+    max_text_width = img.width - 20
+    wrapped_text = textwrap.fill(text, width=40)
+    lines = wrapped_text.split('\n')
+
+    while True:
+        line_widths = [draw.textlength(line, font=font) for line in lines]
+        if all(width <= max_text_width for width in line_widths):
+            break
+        font = ImageFont.truetype("arial.ttf", font.size - 1)
+        wrapped_text = textwrap.fill(text, width=int(font.size*1.5))  # Adjust wrap width based on font size
+        lines = wrapped_text.split('\n')
+
+    total_text_height = sum(draw.textbbox((0, 0), line, font=font)[3] for line in lines) + 10 * (len(lines) - 1)
+
+    current_y = img.height + (padding_height - total_text_height) // 2
+
+    for line in lines:
+        line_width = draw.textlength(line, font=font)
+        text_x = (img.width - line_width) / 2
+        draw.text((text_x, current_y), line, font=font, fill="black")
+        current_y += draw.textbbox((0, 0), line, font=font)[3] + 10  # Move y to next line position
+
+    return new_img
 
 
 def download_mal_images(username, max_images=None):
@@ -150,15 +196,16 @@ def download_mal_images(username, max_images=None):
         if i == max_images:
             break
         i += 1
-        image_object = get_image_from_web(v)
-        image_name = v.split('/')[-1]
+        image_object = get_image_from_web(v, k)
+        keepcharacters = (' ', '.', '_')
+        image_name = "".join(c for c in k if c.isalnum() or c in keepcharacters).rstrip()
+
 
         safe_image_name = safe_name(image_name, "mal")
-
+        print(image_name, safe_image_name)
         save_path = os.path.join(custom_image_recuperation.static_folder, "images", safe_image_name)
 
-        with open(save_path, "wb") as f:
-            f.write(image_object.getbuffer())
+        image_object.save(save_path)
         if user.current_images:
             user.current_images += ',' + safe_image_name
         else:

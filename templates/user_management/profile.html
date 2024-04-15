@@ -283,6 +283,25 @@
         .fixed-btn:hover {
             color: #003885;
         }
+                .delete-icon {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          cursor: pointer;
+          color: white;
+          background-color: red;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          font-size: 16px;
+        }
+        .delete-icon:hover {
+          animation: bounce 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body>
@@ -318,11 +337,10 @@
         <div class="pack-item">
 
             <img src="{{ url_for('static', filename='images/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
-                <script>
-    </script>
             <div class="pack-details">
                 <h3>{{ pack.name }}</h3>
                 <p>Category: {{ pack.category }}</p>
+                <button class="delete-icon" onclick="deletePack('{{ pack.id }}')">&times;</button>
             </div>
             <div class="pack-actions">
                 <button class="add-pack-btn" data-pack-id="{{ pack.id }}"><i class="fas fa-plus"></i></button>
@@ -340,6 +358,8 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script>
+
+
 document.addEventListener('DOMContentLoaded', function () {
     const addPackButtons = document.querySelectorAll('.add-pack-btn');
     const previewIcons = document.querySelectorAll('.preview-icon');
@@ -392,14 +412,29 @@ document.addEventListener('DOMContentLoaded', function () {
         currentActivePackId = null;
     });
 
+
     function addPackToImages(packId) {
         $.post('/add-pack', { packId: packId }, function(response) {
             console.log(response);
         });
+
     }
+
+
 
 });
 </script>
+    <script>
+        function deletePack(packId) {
+    $.post('/delete-pack', { packId: packId }, function(response) {
+        if (response.status === 'success') {
+            location.reload();  // Reload the page to reflect the deletion
+        } else {
+            alert('Error: ' + response.message);  // Display an error message
+        }
+    }, 'json');
+}
+    </script>
 
 </body>
 </html>
