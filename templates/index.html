@@ -94,6 +94,15 @@
   </nav>
   <div class="container">
     <h1>Tournoi d'images</h1>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
     <a href="{{ url_for('tournament_management.start_quick_tournament') }}" class="btn btn-primary">Commencer un Tournoi rapide</a>
     <a href="{{ url_for('managing.manage') }}" class="btn btn-secondary">Gestion des Images</a>
     <a href="{{ url_for('packs_management.store') }}" class="btn btn-secondary">Utiliser des packs Images</a>

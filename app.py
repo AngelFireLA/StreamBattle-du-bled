@@ -8,7 +8,7 @@ from flask import Flask, session
 from flask import request, redirect, url_for, render_template
 from flask import send_file
 from flask_migrate import Migrate
-
+from flask import session
 import shared
 from managing import managing
 from packs_management import packs_management
@@ -21,6 +21,8 @@ def create_app():
     shared.app = Flask(__name__)  # Initialize the Flask app
     shared.app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tournamentsite.db'
     shared.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    shared.app.wsgi_app = ProxyFix(shared.app.wsgi_app)
 
     shared.db.init_app(shared.app)  # Bind the database instance to the Flask app
     migrate = Migrate(shared.app, shared.db)
@@ -45,7 +47,8 @@ app.register_blueprint(custom_image_recuperation, url_prefix="")
 with app.app_context():
     shared.db.create_all()
 
-
+if not os.path.exists(os.path.join(tournament_management.static_folder, 'images')):
+    os.makedirs(os.path.join(tournament_management.static_folder, 'images'))
 
 
 @app.route('/', methods=['GET'])
@@ -55,4 +58,5 @@ def index():
 
 
 if __name__ == "__main__":
+
     app.run(debug=True)

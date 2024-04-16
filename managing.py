@@ -6,6 +6,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 
 import shared
 from class_utils import User
+from tournament_management import user_images_to_list
 
 managing = Blueprint("managing", __name__, static_folder="static", template_folder="templates")
 
@@ -14,11 +15,7 @@ managing = Blueprint("managing", __name__, static_folder="static", template_fold
 def manage():
     user = User.query.get(current_user.id)
     if user.current_images:
-        formatted_string = '["' + '","'.join(user.current_images.split(',')) + '"]'
-        if not formatted_string == '[""]':
-            images = ast.literal_eval(formatted_string)
-        else:
-            images = []
+        images = user_images_to_list(user.current_images)
     else:
         images = []
     return render_template('tournament_management/manage.html', images=images)
@@ -32,6 +29,7 @@ def delete_image():
     user = User.query.get(current_user.id)
     print(user.current_images)
     user.current_images = user.current_images.replace(image_name + ',', '')
+
     print()
     print(user.current_images)
     shared.db.session.commit()

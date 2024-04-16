@@ -1,13 +1,17 @@
+import ast
 import json
 import os
 import random
 import zipfile
 from datetime import datetime
 
-from flask import Blueprint, request, send_file
+from flask import Blueprint, request, send_file, jsonify
 from flask import redirect, url_for, flash, render_template
-from flask import session, abort
+from flask import session
+from flask_login import current_user, login_required
+
 import shared
+from class_utils import User
 
 tournament_management = Blueprint("tournament_management", __name__, static_folder="static", template_folder="templates")
 
@@ -22,26 +26,18 @@ class Tournament(shared.db.Model):
     authorized_users = shared.db.Column(shared.db.String, nullable=False)
 
 # create and load folders
-if not os.path.exists(os.path.join(tournament_management.static_folder, 'images')):
-    os.makedirs(os.path.join(tournament_management.static_folder, 'images'))
+
 if not os.path.exists(os.path.join(tournament_management.static_folder, 'tournaments')):
     os.makedirs(os.path.join(tournament_management.static_folder, 'tournaments'))
 
 images_dir = os.path.join(tournament_management.static_folder, 'images')
 tournaments_dir = os.path.join(tournament_management.static_folder, 'tournaments')
 
-# These variables store the current images being compared (ROUND) and the winners of these comparisons (WINNERS)
-ROUND = []
-WINNERS = []
-TOTAL_IMAGES = None
-round_number = None
-match_number = 0
-
 
 def create_tournament(tournament_id, participants):
     date_prefix = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
-    file_name = f"{date_prefix}_{tournament_id}.json"
+    file_name = f"{tournament_id}.json"
     tournament_data = {
         "tournament_id": tournament_id,
         "date_created": date_prefix,
@@ -56,26 +52,116 @@ def create_tournament(tournament_id, participants):
     return file_name
 
 @tournament_management.route('/start_quick_tournament', methods=['GET'])
+@login_required
 def start_quick_tournament():
-    global ROUND, WINNERS, TOTAL_IMAGES, round_number, match_number
-    ROUND = []
-    WINNERS = []
-    TOTAL_IMAGES = None
-    round_number = None
-    match_number = 0
-    images = [f for f in os.listdir(images_dir) if os.path.isfile(os.path.join(images_dir, f))]
-    print(images)
-    random.shuffle(images)
-    tournament_file = create_tournament(random.randint(999, 9999999), images)
-    session['tournament_file'] = tournament_file
-    ROUND = images
-    if len(images) % 2 == 1:
-        round_number = len(images) + 1
+    user = User.query.get(current_user.id)
+    if user.current_images:
+        images = user_images_to_list(user.current_images)
+        if not images:
+            flash("Pas d'images pour l'utilisateur.")
+            return redirect(url_for('index'))
     else:
-        round_number = len(images)
+        flash("Pas d'images pour l'utilisateur.")
+        return redirect(url_for('index'))
+
+    session.pop('tournament_id', None)
+    session.pop('current_round_images', None)
+    session.pop('current_round_number', None)
+    session.pop('current_winners', None)
+    session.pop('current_match_number', None)
+    images = [f for f in images if os.path.isfile(os.path.join(images_dir, f))]
+    random.shuffle(images)
+    tournament_id = random.randint(999, 9999999)
+    tournament_file = create_tournament(tournament_id, images)
+    session['tournament_id'] = str(tournament_id)
+    session['current_round_images'] = images
+    session['current_round_number'] = len(images) + 1 if len(images) % 2 == 1 else len(images)
+    session['current_winners'] = []
+    session['current_match_number'] = 0
+    session.modified = True
+    print(session, jsonify(session))
 
     return redirect(url_for('tournament_management.match'))
 
+@tournament_management.route('/match', methods=['GET', 'POST'])
+def match():
+    print(session, jsonify(session))
+    tournament_id = session.get('tournament_id')
+    if tournament_id:
+        with open(os.path.join(tournaments_dir, tournament_id+".json"), 'r') as file:
+            tournament_data = json.load(file)
+
+    if request.method == 'POST':
+        winner = request.form['winner']
+        non_winner = request.form['non_winner']
+        session['current_winners'].append(winner)
+
+        tournament_data['matches'].append({
+            'round': session['current_round_number'],
+            'participants': [winner, non_winner],  # Update with actual participants
+            'winner': winner,
+            'status': 'completed'
+        })
+
+        with open(os.path.join(tournaments_dir, tournament_id+".json"), 'w') as file:
+            json.dump(tournament_data, file, indent=4)
+
+        if not session['current_round_images']:
+            session['current_match_number'] = 0
+            if len(session['current_winners']) == 1:
+                # Update the status to 'completed' in the JSON file
+                tournament_data['status'] = 'completed'
+
+                # Initialize rankings dictionary
+                rankings = {winner: 1 for winner in session['current_winners']}
+
+                # Iterate over participants to determine their ranks
+                for participant in tournament_data['participants']:
+                    if participant not in rankings:
+                        # Find the highest round this participant reached
+                        max_round = max(
+                            (m['round'] for m in tournament_data['matches'] if
+                             participant in m['participants'] and m['winner'] != participant),
+                            default=0
+                        )
+                        rankings[participant] = max_round
+
+                # Sort rankings by rank and update JSON file
+                sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
+                tournament_data['rankings'] = [{"file": file, "rank": rank} for file, rank in sorted_rankings]
+
+                with open(os.path.join(tournaments_dir, tournament_id+".json"), 'w') as file:
+                    json.dump(tournament_data, file, indent=4)
+                session.modified = True
+                return render_template('tournament_management/winner.html', winner_image=session['current_winners'][0],
+                                       rankings=convert_to_rankings(tournament_data['rankings']))
+            session['current_winners'] = randomize_list(session['current_winners'])
+            session['current_round_images'], session['current_winners'] = session['current_winners'], []
+            session['current_round_images'] = randomize_list(session['current_round_images'])
+            random.shuffle(session['current_round_images'])
+            if len(session['current_round_images']) % 2 == 1:
+                session['current_round_number'] = len(session['current_round_images']) + 1
+            else:
+                session['current_round_number'] = len(session['current_round_images'])
+        session.modified = True
+        return redirect(url_for('tournament_management.match'))
+
+    session['current_match_number'] += 1
+    pair = []
+    if len(session['current_round_images']) > 1:
+        pair = [session['current_round_images'].pop(), session['current_round_images'].pop()]
+    elif session['current_round_images']:
+        pair = [session['current_round_images'].pop()]
+    session.modified = True
+    return render_template('tournament_management/match.html', pair=pair, round_name="Round of " + str(session['current_round_number']),
+                           round_progress=str(session['current_match_number']) + "/" + str(int(session['current_round_number'] / 2)))
+
+def user_images_to_list(user_current_images):
+    formatted_string = '["' + '","'.join(user_current_images.split(',')) + '"]'
+    if not formatted_string == '[""]':
+        return ast.literal_eval(formatted_string)
+    else:
+        return []
 def randomize_list(input_list):
     randomized_list = input_list.copy()
     for i in range(len(randomized_list) - 1, 0, -1):
@@ -103,79 +189,7 @@ def convert_to_rankings(image_list):
     return rankings
 
 
-@tournament_management.route('/match', methods=['GET', 'POST'])
-def match():
-    global ROUND, WINNERS, TOTAL_IMAGES, round_number, match_number
-    tournament_file = session.get('tournament_file')
 
-    if tournament_file:
-        with open(os.path.join(tournaments_dir, tournament_file), 'r') as file:
-            tournament_data = json.load(file)
-
-    if request.method == 'POST':
-        winner = request.form['winner']
-        non_winner = request.form['non_winner']
-        WINNERS.append(winner)
-
-        tournament_data['matches'].append({
-            'round': round_number,
-            'participants': [winner, non_winner],  # Update with actual participants
-            'winner': winner,
-            'status': 'completed'
-        })
-
-        with open(os.path.join(tournaments_dir, tournament_file), 'w') as file:
-            json.dump(tournament_data, file, indent=4)
-
-        if not ROUND:
-            match_number = 0
-            if len(WINNERS) == 1:
-                # Update the status to 'completed' in the JSON file
-                tournament_data['status'] = 'completed'
-
-                # Initialize rankings dictionary
-                rankings = {winner: 1 for winner in WINNERS}
-
-                # Iterate over participants to determine their ranks
-                for participant in tournament_data['participants']:
-                    if participant not in rankings:
-                        # Find the highest round this participant reached
-                        max_round = max(
-                            (m['round'] for m in tournament_data['matches'] if
-                             participant in m['participants'] and m['winner'] != participant),
-                            default=0
-                        )
-                        rankings[participant] = max_round
-
-                # Sort rankings by rank and update JSON file
-                sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
-                tournament_data['rankings'] = [{"file": file, "rank": rank} for file, rank in sorted_rankings]
-
-                with open(os.path.join(tournaments_dir, tournament_file), 'w') as file:
-                    json.dump(tournament_data, file, indent=4)
-
-                return render_template('tournament_management/winner.html', winner_image=WINNERS[0],
-                                       rankings=convert_to_rankings(tournament_data['rankings']))
-            WINNERS = randomize_list(WINNERS)
-            ROUND, WINNERS = WINNERS, []
-            ROUND = randomize_list(ROUND)
-            random.shuffle(ROUND)
-            if len(ROUND) % 2 == 1:
-                round_number = len(ROUND) + 1
-            else:
-                round_number = len(ROUND)
-
-        return redirect(url_for('tournament_management.match'))
-
-    match_number += 1
-    pair = []
-    if len(ROUND) > 1:
-        pair = [ROUND.pop(), ROUND.pop()]
-    elif ROUND:
-        pair = [ROUND.pop()]
-    print(pair)
-    return render_template('tournament_management/match.html', pair=pair, round_name="Round of " + str(round_number),
-                           round_progress=str(match_number) + "/" + str(int(round_number / 2)))
 
 
 def calc_round(round_images, total_images):
