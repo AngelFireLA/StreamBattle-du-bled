@@ -79,13 +79,11 @@ def start_quick_tournament():
     session['current_winners'] = []
     session['current_match_number'] = 0
     session.modified = True
-    print(session, jsonify(session))
 
     return redirect(url_for('tournament_management.match'))
 
 @tournament_management.route('/match', methods=['GET', 'POST'])
 def match():
-    print(session, jsonify(session))
     tournament_id = session.get('tournament_id')
     if tournament_id:
         with open(os.path.join(tournaments_dir, tournament_id+".json"), 'r') as file:

@@ -69,7 +69,7 @@ def safe_name(image_name:str, type_of_image:str)-> str:
     #rename an image with the original with the type of image, the original name of the image, and a way to not make it overwrite a previous image, making the name unique
     timestamp = int(time.time() * 1000)
     unique_id = uuid.uuid4()
-    safe_image_name = f"{type_of_image}_{image_name}_{timestamp}.png"
+    safe_image_name = f"{type_of_image}_{image_name}_{timestamp}_{unique_id}.png"
     return safe_image_name
 
 
