@@ -4,6 +4,7 @@ import os
 import random
 import zipfile
 from datetime import datetime
+from io import BytesIO
 
 from flask import Blueprint, request, send_file, jsonify
 from flask import redirect, url_for, flash, render_template
@@ -31,7 +32,7 @@ if not os.path.exists(os.path.join(tournament_management.static_folder, 'tournam
     os.makedirs(os.path.join(tournament_management.static_folder, 'tournaments'))
 
 images_dir = os.path.join(tournament_management.static_folder, 'images')
-tournaments_dir = os.path.join(tournament_management.static_folder, 'tournaments')
+tournament_dir = os.path.join(tournament_management.static_folder, 'tournaments')
 
 
 def create_tournament(tournament_id, participants):
@@ -47,7 +48,7 @@ def create_tournament(tournament_id, participants):
         "matches": [],
         "rankings": []
     }
-    with open(os.path.join(tournaments_dir, file_name), 'w') as file:
+    with open(os.path.join(tournament_dir, file_name), 'w') as file:
         json.dump(tournament_data, file)
     return file_name
 
@@ -83,10 +84,11 @@ def start_quick_tournament():
     return redirect(url_for('tournament_management.match'))
 
 @tournament_management.route('/match', methods=['GET', 'POST'])
+@login_required
 def match():
     tournament_id = session.get('tournament_id')
     if tournament_id:
-        with open(os.path.join(tournaments_dir, tournament_id+".json"), 'r') as file:
+        with open(os.path.join(tournament_dir, tournament_id+".json"), 'r') as file:
             tournament_data = json.load(file)
 
     if request.method == 'POST':
@@ -101,7 +103,7 @@ def match():
             'status': 'completed'
         })
 
-        with open(os.path.join(tournaments_dir, tournament_id+".json"), 'w') as file:
+        with open(os.path.join(tournament_dir, tournament_id+".json"), 'w') as file:
             json.dump(tournament_data, file, indent=4)
 
         if not session['current_round_images']:
@@ -128,7 +130,7 @@ def match():
                 sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
                 tournament_data['rankings'] = [{"file": file, "rank": rank} for file, rank in sorted_rankings]
 
-                with open(os.path.join(tournaments_dir, tournament_id+".json"), 'w') as file:
+                with open(os.path.join(tournament_dir, tournament_id+".json"), 'w') as file:
                     json.dump(tournament_data, file, indent=4)
                 session.modified = True
                 return render_template('tournament_management/winner.html', winner_image=session['current_winners'][0],
@@ -153,6 +155,41 @@ def match():
     session.modified = True
     return render_template('tournament_management/match.html', pair=pair, round_name="Round of " + str(session['current_round_number']),
                            round_progress=str(session['current_match_number']) + "/" + str(int(session['current_round_number'] / 2)))
+
+from tierlist import create_tier_list, convert_rankings, load_images
+
+
+@tournament_management.route('/get_tierlist', methods=['GET'])
+def get_tierlist():
+    tournament_id = session.get('tournament_id')
+    if tournament_id:
+        with open(os.path.join(tournament_dir, tournament_id+".json"), 'r') as file:
+            tournament_data = json.load(file)
+    else:
+        return jsonify({'error': 'Tournament not found'})
+
+    rankings = {}
+
+    for participant in tournament_data['participants']:
+        max_round = max(
+            (m['round'] for m in tournament_data['matches'] if
+             participant in m['participants'] and m['winner'] != participant),
+            default=0
+        )
+        rankings[participant] = max_round
+    sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
+    tournament_data['rankings'] = [{"file": file, "rank": rank} for file, rank in sorted_rankings]
+    tiers = convert_to_rankings(tournament_data['rankings'])
+    tier_images = load_images(convert_rankings(tiers))
+    tier_list_img = create_tier_list(tier_images)
+
+    # Save the image to a BytesIO object
+    img_io = BytesIO()
+    tier_list_img.save(img_io, 'PNG')
+    img_io.seek(0)  # Go to the beginning of the BytesIO stream
+
+    # Send the BytesIO stream as a file
+    return send_file(img_io, mimetype='image/png', as_attachment=True, download_name='tierlist.png')
 
 def user_images_to_list(user_current_images):
     formatted_string = '["' + '","'.join(user_current_images.split(',')) + '"]'
@@ -204,7 +241,7 @@ def download_rank(rank):
     tournament_file = session.get('tournament_file')
 
     if tournament_file:
-        with open(os.path.join(tournaments_dir, tournament_file), 'r') as file:
+        with open(os.path.join(tournament_dir, tournament_file), 'r') as file:
             tournament_data = json.load(file)
 
         # Filter images by the specified rank
@@ -212,7 +249,7 @@ def download_rank(rank):
 
         # Create a ZIP file
         zip_filename = f'rank_{rank}_images.zip'
-        zip_filepath = os.path.join(tournaments_dir, zip_filename)
+        zip_filepath = os.path.join(tournament_dir, zip_filename)
         with zipfile.ZipFile(zip_filepath, 'w') as zipf:
             for img in images_to_download:
                 img_path = os.path.join(images_dir, img)

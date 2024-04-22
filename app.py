@@ -5,6 +5,7 @@ from flask import render_template
 from flask_migrate import Migrate
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import CSRFProtect
 
 import shared
 from managing import managing
@@ -24,6 +25,9 @@ def create_app():
     shared.app.config['SESSION_COOKIE_SECURE'] = True  # if you are using HTTPS
     shared.app.config['SESSION_COOKIE_HTTPONLY'] = True
     shared.app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict' or 'Lax'
+    shared.app.secret_key = "srguzGW2kTdjhqpsUKnG5DyJvvCUk5b8"
+
+    csrf = CSRFProtect(shared.app)
 
     shared.db.init_app(shared.app)  # Bind the database instance to the Flask app
     migrate = Migrate(shared.app, shared.db)
@@ -39,7 +43,6 @@ def create_app():
 
 
 app = create_app()
-app.secret_key = "srguzGW2kTdjhqpsUKnG5DyJvvCUk5b9"
 app.register_blueprint(user_management, url_prefix="")
 app.register_blueprint(packs_management, url_prefix="")
 app.register_blueprint(managing, url_prefix="")
