@@ -198,12 +198,16 @@
 
     <h1 class="text-center text-white mb-4">Image Packs Store</h1>
     <div class="pack-container">
+        <div class="search-bar text-center mb-4">
+    <input type="text" id="search-input" placeholder="Rechercher des packs" class="form-control" style="max-width: 400px; margin: auto;">
+</div>
+
         {% for pack in packs %}
         <div class="pack-item">
             <img src="{{ url_for('static', filename='images/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
             <div class="pack-details">
                 <h3>{{ pack.name }}</h3>
-                <p>Category: {{ pack.category }}</p>
+                <p>Créateur: {{ pack.username }} (id: {{ pack.id }})</p>
             </div>
             <div class="pack-actions">
                 <button class="add-pack-btn" data-pack-id="{{ pack.id }}"><i class="fas fa-plus"></i></button>
@@ -290,6 +294,28 @@ createCustomPackBtn.addEventListener('click', () => {
     window.location.href = '/create-pack'; // Navigate to the create pack page
 });
 });
+
+document.getElementById('search-input').addEventListener('keyup', function() {
+    var searchTerm = this.value.toLowerCase();
+    var packs = document.querySelectorAll('.pack-item');
+
+    packs.forEach(function(pack) {
+        // Get the pack name
+        var packName = pack.querySelector('.pack-details h3').textContent.toLowerCase();
+        // Extract creator's name, skipping the "Créateur :" prefix
+        var packCreatorText = pack.querySelector('.pack-details p').textContent.toLowerCase();
+        var packCreator = packCreatorText.replace('créateur: ', '').split('(')[0].trim(); // Split and trim to remove the "(id: x)" part
+
+        // Check if the search term is in the pack name or creator's name
+        if (packName.includes(searchTerm) || packCreator.includes(searchTerm)) {
+            pack.style.display = '';
+        } else {
+            pack.style.display = 'none';
+        }
+    });
+});
+
+
 </script>
 </body>
 </html>

@@ -339,7 +339,6 @@
             <img src="{{ url_for('static', filename='images/' + pack.preview) }}" alt="{{ pack.name }} Preview" class="pack-preview">
             <div class="pack-details">
                 <h3>{{ pack.name }}</h3>
-                <p>Category: {{ pack.category }}</p>
                 <button class="delete-icon" onclick="deletePack('{{ pack.id }}')">&times;</button>
             </div>
             <div class="pack-actions">

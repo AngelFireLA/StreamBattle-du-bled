@@ -10,7 +10,7 @@ import instaloader
 import requests
 from PIL import Image
 from bing_image_downloader import downloader
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, flash
 import uuid
 import PIL
 import io
@@ -24,7 +24,7 @@ from class_utils import User
 
 custom_image_recuperation = Blueprint('custom_image_recuperation', __name__, static_folder="static", template_folder="templates")
 
-count_by_images = False  # if instagram image downloader downloads posts or individual images
+count_by_images = True  # if instagram image downloader downloads posts or individual images
 
 
 def download_instagram_images(username, max_images=None):
@@ -35,8 +35,10 @@ def download_instagram_images(username, max_images=None):
                                      save_metadata=False,
                                      post_metadata_txt_pattern='',
                                      filename_pattern='{date_utc}_UTC')
-    p = instaloader.Profile.from_username(loader.context, username)
-
+    try:
+        p = instaloader.Profile.from_username(loader.context, username)
+    except instaloader.exceptions.ConnectionException:
+        flash("Profile privée ou pas d'images sur le compte")
     image_count = 0
 
     for post in p.get_posts():
@@ -82,6 +84,7 @@ def download_instagram_images_route():
         max_images = None
     # Use the download_images function to download images
     download_instagram_images(username, max_images)
+    ""
 
     # The path where downloaded images are stored
     instagram_folder_path = os.path.join(os.getcwd(), username)
@@ -99,7 +102,7 @@ def download_instagram_images_route():
         if user.current_images:
             user.current_images += ',' + safe_image_file
         else:
-            user.current_images = image_file
+            user.current_images = safe_image_file
     shared.db.session.commit()
     # Remove the now-empty Instagram folder
     shutil.rmtree(instagram_folder_path)
@@ -229,16 +232,13 @@ def download_bing_images_route():
     keywords = request.form['keywords']
     max_images = int(request.form['count'])
 
-    # Target path to move images to
     target_folder_path = os.path.join(custom_image_recuperation.static_folder, 'images')
 
-    # Use the download_images function to download images
     download_bing_images(keywords, max_images, target_folder_path)
     bing_folder_path = os.path.join(target_folder_path, keywords)
     user = User.query.get(current_user.id)
-    # Moving the images to the 'images' folder
-    for image_file in os.listdir(bing_folder_path):
 
+    for image_file in os.listdir(bing_folder_path):
         source_path = os.path.join(bing_folder_path, image_file)
         safe_image_file = safe_name(image_file, "instagram_" + keywords)
         target_path = os.path.join(target_folder_path, safe_image_file)

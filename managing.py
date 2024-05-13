@@ -34,12 +34,20 @@ def delete_image():
     print(user.current_images)
     shared.db.session.commit()
     return jsonify({'status': 'deleted'})
-
+from custom_image_recuperation import safe_name
 @managing.route('/upload-images', methods=['POST'])
 def upload_images():
+    user = User.query.get(current_user.id)
     uploaded_files = request.files.getlist("images[]")
     for file in uploaded_files:
-        file.save(os.path.join(managing.static_folder, 'images', file.filename))
+        safe_image_name = safe_name("upload_"+file.filename, user.id)
+        file.save(os.path.join(managing.static_folder, 'images', safe_image_name))
+        print(file.filename)
+        if  user.current_images == "":
+            user.current_images = safe_image_name
+        else:
+            user.current_images += ','+safe_image_name
+    print(user.current_images)
     return jsonify({'status': 'uploaded'})
 
 
@@ -49,3 +57,4 @@ def delete_all_images():
     user.current_images = ""
     shared.db.session.commit()
     return jsonify({'status': 'all_deleted'})
+

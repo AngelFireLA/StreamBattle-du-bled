@@ -76,12 +76,29 @@
           color: #007bff;
           font-size: 50px;
         }
-        #downloadTierlistBtn {
-          top: 20px;
-          right: 20px;
-          background-color: #28a745; /* Bootstrap success green */
-          color: white;
-        }
+#downloadTierlistBtn {
+    top: 20px;
+    right: 20px;
+    background-color: #007BFF; /* Change to a more thematic blue */
+    color: white;
+    border: none; /* Optionally remove the border if present */
+    width: auto; /* Adjust width to fit content if necessary */
+    padding: 10px 20px; /* Adjust padding for better visual appeal */
+    border-radius: 30px; /* Making it more round */
+    font-size: 16px; /* Adjust font size as needed */
+    transition: background-color 0.3s, transform 0.3s; /* Smooth transitions for hover effects */
+}
+
+#downloadTierlistBtn:hover {
+    background-color: #0056b3; /* A darker blue for hover effect */
+    transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+        #downloadTierlistBtn i {
+    margin-right: 10px; /* Adds space between the icon and text */
+}
+
+
     </style>
 </head>
 <body>
@@ -106,11 +123,12 @@
     <button class="fixed-btn" id="returnHomeBtn" title="Retourner à l'accueil" onclick="window.location.href='/'">
         <i class="fas fa-home"></i>
     </button>
-    <!-- Download Tierlist Button -->
-    <button class="fixed-btn" id="downloadTierlistBtn" title="Download Tierlist"
-            onclick="window.location.href='{{ url_for('tournament_management.get_tierlist', tournament_id=tournament_id) }}'">
-        <i class="fas fa-list"></i>
-    </button>
+<button class="fixed-btn" id="downloadTierlistBtn" title="Download Tierlist"
+        onclick="window.location.href='{{ url_for('tournament_management.get_tierlist', tournament_id=tournament_id) }}'">
+    <i class="fas fa-list"></i>  Download Tierlist
+</button>
+
+
 </div>
 </body>
 </html>

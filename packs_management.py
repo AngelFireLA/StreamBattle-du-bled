@@ -16,14 +16,12 @@ import ast
 from class_utils import Pack
 from class_utils import User
 
-
-
 packs_management = Blueprint("packs_management", __name__, static_folder="static", template_folder="templates")
 images_dir = os.path.join(packs_management.static_folder, 'images')
 
 
 def get_user_packs(user_id):
-    packs_query = Pack.query.filter_by(user_id=user_id).all()  # Filter packs by user ID
+    packs_query = Pack.query.filter_by(user_id=user_id).all()
     packs = []
     for pack in packs_query:
         pack_dict = {
@@ -33,7 +31,6 @@ def get_user_packs(user_id):
             "preview": pack.preview,
             "images": ast.literal_eval(pack.images),
             "private": pack.private,
-            # Include additional attributes as needed
         }
         packs.append(pack_dict)
     return packs
@@ -61,7 +58,6 @@ def get_all_packs():
 @login_required
 def store():
     if current_user.is_authenticated:
-        # Fetch all packs that are either public, the user is authorized to view, or the user has created
         all_packs = Pack.query.filter(
             (Pack.private == False) |
             (Pack.user_id == current_user.id) |
@@ -73,7 +69,8 @@ def store():
 
     packs = []
     for pack in all_packs:
-        print(pack.images)
+        # get user that owns pack
+        user = User.query.get(pack.user_id)
         pack_dict = {
             "id": str(pack.id),
             "name": pack.name,
@@ -81,6 +78,8 @@ def store():
             "preview": pack.preview,
             "images": ast.literal_eval(pack.images),
             "private": pack.private,
+            "user_id": str(user.id),
+            "username": user.username,
         }
         packs.append(pack_dict)
 
@@ -122,6 +121,7 @@ def add_pack():
         print("invalid pack")
         return jsonify({'status': 'error', 'message': 'Invalid pack ID'}), 400
 
+
 def convert_pack_to_dict(pack: Pack):
     pack_dict = {
         "id": str(pack.id),
@@ -132,6 +132,7 @@ def convert_pack_to_dict(pack: Pack):
         "private": pack.private,
     }
     return pack_dict
+
 
 class CreatePackForm(FlaskForm):
     pack_name = StringField('Nom du Pack', validators=[DataRequired()])
@@ -226,7 +227,6 @@ def delete_pack():
     if not pack or pack.user_id != current_user.id:
         return jsonify({'status': 'error', 'message': 'Pack not found or unauthorized'}), 403
 
-
     for image in os.listdir(images_dir):
         if image.startswith(f"{pack_id}_"):
             os.remove(os.path.join(images_dir, image))
@@ -234,3 +234,29 @@ def delete_pack():
     shared.db.session.commit()
 
     return jsonify({'status': 'success', 'message': 'Pack deleted successfully'})
+
+
+# command to delete pack of specific id
+@packs_management.cli.command("delete_pack")
+def delete_pack_command():
+    """CLI command to delete a pack."""
+    pack_id = input("Enter the ID of the pack to delete: ")
+    try:
+        pack_id = int(pack_id)
+    except ValueError:
+        print("Invalid pack ID. Please enter a valid integer.")
+        return
+
+    pack = Pack.query.get(pack_id)
+    if not pack:
+        print("Pack not found.")
+        return
+
+    shared.db.session.delete(pack)
+    # find if a user owns this pack and emove it from his list
+    users = User.query.all()
+    for user in users:
+        if pack_id in ast.literal_eval(user.current_images):
+            user.current_images = ast.literal_eval(user.current_images).remove(pack_id)
+
+    shared.db.session.commit()

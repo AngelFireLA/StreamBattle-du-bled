@@ -22,12 +22,10 @@ def create_app():
     shared.app.config['SESSION_TYPE'] = 'sqlalchemy'
     shared.app.config['SESSION_PERMANENT'] = True  # Sessions are permanent by default, modify as needed
     shared.app.config['PERMANENT_SESSION_LIFETIME'] = 86400 * 4  # Customize session lifetime as needed, here set to 7 days
-    shared.app.config['SESSION_COOKIE_SECURE'] = True  # if you are using HTTPS
     shared.app.config['SESSION_COOKIE_HTTPONLY'] = True
     shared.app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Can be 'Strict' or 'Lax'
     shared.app.secret_key = "srguzGW2kTdjhqpsUKnG5DyJvvCUk5b8"
 
-    csrf = CSRFProtect(shared.app)
 
     shared.db.init_app(shared.app)  # Bind the database instance to the Flask app
     migrate = Migrate(shared.app, shared.db)
@@ -95,6 +93,19 @@ def cleanup_images_command():
     """CLI command to clean up unused images."""
     cleanup_unused_images()
     print("Cleanup complete.")
+
+@app.cli.command("delete_pack")
+def delete_pack_command():
+    pack_id = int(input("Enter the ID of the pack to delete: "))
+    pack = Pack.query.get(pack_id)
+    images_dir = os.path.join(app.static_folder, 'images')
+    for image in os.listdir(images_dir):
+        if image.startswith(f"{pack_id}_"):
+            os.remove(os.path.join(images_dir, image))
+    shared.db.session.delete(pack)
+    shared.db.session.commit()
+
+
 
 
 if __name__ == "__main__":
