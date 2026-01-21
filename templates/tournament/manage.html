@@ -223,7 +223,7 @@ input:checked + .slider:before {
     <div class="image-grid">
         {% for image in images %}
         <div class="image-container">
-            <img alt="Image" src="{{ url_for('static', filename='images/' + image) }}">
+            <img alt="Image" src="{{ url_for('static', filename='all_images/' + image) }}">
             <span class="delete-icon" onclick="deleteImage('{{ image }}')">&times;</span>
         </div>
         {% endfor %}

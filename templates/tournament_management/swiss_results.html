@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Swiss Tournament Results</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, skyblue, blue);
+            padding: 20px;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .results-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .results-table th, .results-table td {
+            text-align: center;
+            padding: 15px;
+        }
+        .results-table th {
+            background: #007bff;
+            color: white;
+        }
+        .results-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .participant-img {
+            max-width: 100px;
+            height: auto;
+            border-radius: 10px;
+        }
+        .fixed-btn {
+            position: fixed;
+            z-index: 10;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            font-size: 30px;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            background-color: transparent;
+            color: #007bff;
+            top: 20px;
+            left: 20px;
+        }
+        .fixed-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('index') }}" class="fixed-btn" title="Retourner à l'accueil">
+        <i class="fas fa-home"></i>
+    </a>
+    <h1>Tournament Results</h1>
+    <div class="table-responsive">
+        <table class="table results-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Participant</th>
+                    <th>Wins</th>
+                    <th>Losses</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for standing in standings %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        <img src="{{ url_for('static', filename='all_images/' + standing.participant) }}" alt="Participant" class="participant-img">
+                    </td>
+                    <td>{{ standing.wins }}</td>
+                    <td>{{ standing.losses }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <button class="fixed-btn" id="downloadTierlistBtn" title="Download Tierlist"
+            onclick="window.location.href='{{ url_for('tournament_management.get_swiss_tierlist', tournament_id=tournament_id) }}'">
+        <i class="fas fa-list"></i>  Download Tierlist
+    </button>
+<h2>Résultats du Tournoi Suisse</h2>
+{% for rank in rankings %}
+    <h3>Top {{ rank.rank }}</h3>
+    <div class="ranking-container">
+        <div class="rank-entry">
+            {% for image in rank.images %}
+                <img src="{{ url_for('static', filename='all_images/' + image) }}">
+            {% endfor %}
+            <!-- Download button with icon -->
+            <a href="{{ url_for('tournament_management.download_rank', rank=rank.rank) }}" class="btn btn-primary download-btn">
+                <i class="fas fa-download"></i> Top {{ rank.rank }}
+            </a>
+        </div>
+    </div>
+{% endfor %}
+
+
+</body>
+</html>

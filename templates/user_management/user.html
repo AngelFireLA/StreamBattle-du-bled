@@ -250,7 +250,7 @@
         <h3>Packs</h3>
         {% for pack in user_packs %}
         <div class="pack-item">
-            <img src="{{ url_for('static', filename='images/' + pack.preview) }}" alt="{{ pack.name }}" class="pack-preview">
+            <img src="{{ url_for('static', filename='all_images/' + pack.preview) }}" alt="{{ pack.name }}" class="pack-preview">
             <div class="pack-details">
                 <h4>{{ pack.name }}</h4>
             </div>
@@ -265,7 +265,7 @@
     </div>
     <div class="preview-popup">
         <div class="preview-images">
-            <!-- Preview images will be added here dynamically -->
+            <!-- Preview all_images will be added here dynamically -->
         </div>
         <span class="close-preview">&times;</span>
     </div>

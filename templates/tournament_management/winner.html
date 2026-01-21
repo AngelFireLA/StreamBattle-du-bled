@@ -104,14 +104,14 @@
 <body>
 <div class="container">
     <h1>L'image gagnante est...</h1>
-    <img src="{{ url_for('static', filename='images/' + winner_image) }}" class="winner-image">
+    <img src="{{ url_for('static', filename='all_images/' + winner_image) }}" class="winner-image">
     <h2>Rankings</h2>
     {% for rank in rankings %}
     <h3>Rank {{ rank.rank }}</h3>
     <div class="ranking-container">
         <div class="rank-entry">
             {% for image in rank.images %}
-            <img src="{{ url_for('static', filename='images/' + image) }}">
+            <img src="{{ url_for('static', filename='all_images/' + image) }}">
             {% endfor %}
             <a href="url_for('tournament_management.download_rank', rank=rank.rank) }}"
                class="btn btn-primary download-btn">

@@ -8,7 +8,7 @@ def load_images(tiers, size=(150, 150)):
     for tier, filenames in tiers.items():
         loaded_images = []
         for filename in filenames:
-            img = Image.open("static/images/"+filename)
+            img = Image.open("static/all_images/"+filename)
             img = img.resize(size)  # Resize to desired dimensions
             loaded_images.append(img)
         tier_images[tier] = loaded_images
@@ -57,12 +57,15 @@ def create_tier_list(tier_images, image_size=(150, 150), line_height=5):
 
     y_offset = spacing  # Start spacing pixels from the top
 
-    # Draw tiers, labels, and images
+    # Draw tiers, labels, and all_images
     for tier, color in zip(tier_labels, tier_colors):
+        tier_to_draw = tier
+        if str(tier_to_draw) == "0":
+            tier_to_draw = "1"
         # Draw the tier label box
         draw.rectangle((0, y_offset, label_width, y_offset + image_size[1]), fill=color)
         # Draw the tier label text
-        draw.text((label_width / 4, y_offset + image_size[1] / 3), str(tier), fill=(255, 255, 255), font=font)
+        draw.text((label_width / 4, y_offset + image_size[1] / 3), str(tier_to_draw), fill=(255, 255, 255), font=font)
 
         x_offset = label_width + spacing  # Start after the label
         for img in tier_images[tier]:
@@ -86,10 +89,10 @@ def convert_to_rankings(image_list):
 
         if existing_rank is None:
             # If the rank doesn't exist, add a new entry
-            rankings.append({'rank': item['rank'], 'images': [item['file']]})
+            rankings.append({'rank': item['rank'], 'all_images': [item['file']]})
         else:
-            # If the rank exists, append the file to the images list
-            existing_rank['images'].append(item['file'])
+            # If the rank exists, append the file to the all_images list
+            existing_rank['all_images'].append(item['file'])
     # Sorting the list based on rank
     rankings.sort(key=lambda x: x['rank'])
     return rankings
@@ -98,9 +101,9 @@ def convert_rankings(rankings):
     converted_rankings = {}
     for ranking in rankings:
         if ranking["rank"] in converted_rankings:
-            for image in ranking["images"]:
+            for image in ranking["all_images"]:
                 converted_rankings[ranking["rank"]].append(image)
         else:
-            converted_rankings[ranking["rank"]] = ranking["images"]
+            converted_rankings[ranking["rank"]] = ranking["all_images"]
     return converted_rankings
 

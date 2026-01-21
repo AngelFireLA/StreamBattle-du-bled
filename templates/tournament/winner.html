@@ -82,16 +82,16 @@
 <body>
   <div class="container">
     <h1>L'image gagnante est...</h1>
-    <img src="{{ url_for('static', filename='images/' + winner_image) }}" class="winner-image">
+    <img src="{{ url_for('static', filename='all_images/' + winner_image) }}" class="winner-image">
     <h2>Rankings</h2>
     <!-- Loop through each rank -->
     {% for rank in rankings %}
       <h3>Rank {{ rank.rank }}</h3>
       <div class="ranking-container">
-        <!-- Loop through images in this rank -->
+        <!-- Loop through all_images in this rank -->
         <div class="rank-entry">
           {% for image in rank.images %}
-            <img src="{{ url_for('static', filename='images/' + image) }}">
+            <img src="{{ url_for('static', filename='all_images/' + image) }}">
           {% endfor %}
           <!-- Download button with icon -->
           <a href="{{ url_for('download_rank', rank=rank.rank) }}" class="btn btn-primary download-btn">

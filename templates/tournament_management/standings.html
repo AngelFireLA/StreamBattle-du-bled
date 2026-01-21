@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Swiss Tournament - Standings</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to right, skyblue, blue);
+      padding-top: 20px;
+    }
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .results-table {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .results-table th, .results-table td {
+      text-align: center;
+      padding: 15px;
+    }
+    .results-table th {
+      background: #007bff;
+      color: white;
+    }
+    .results-table tbody tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+    .participant-img {
+      max-width: 100px;
+      height: auto;
+      border-radius: 10px;
+    }
+    .next-round-btn {
+      display: block;
+      margin: 30px auto;
+      padding: 15px 30px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Current Standings</h1>
+  <div class="table-responsive">
+    <table class="table results-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Participant</th>
+          <th>Wins</th>
+          <th>Losses</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for standing in standings %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>
+            <img src="{{ url_for('static', filename='all_images/' + standing.participant) }}" alt="Participant" class="participant-img">
+          </td>
+          <td>{{ standing.wins }}</td>
+          <td>{{ standing.losses }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <a href="{{ url_for('tournament_management.swiss_round') }}" class="btn btn-primary next-round-btn">Proceed to Next Round</a>
+    <button class="fixed-btn" id="downloadTierlistBtn" title="Download Tierlist"
+            onclick="window.location.href='{{ url_for('tournament_management.get_swiss_tierlist', tournament_id=tournament_id) }}'">
+        <i class="fas fa-list"></i>  Download Tierlist
+    </button>
+</body>
+</html>

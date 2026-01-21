@@ -24,8 +24,11 @@ def manage():
 @managing.route('/delete-image', methods=['POST'])
 def delete_image():
     image_name = request.form['image']
-    image_path = os.path.join(managing.static_folder, 'images', image_name)
-    os.remove(image_path)
+    try:
+        image_path = os.path.join(managing.static_folder, 'all_images', image_name)
+        os.remove(image_path)
+    except Exception as E:
+        print(E)
     user = User.query.get(current_user.id)
     print(user.current_images)
     user.current_images = user.current_images.replace(image_name + ',', '')
@@ -34,14 +37,16 @@ def delete_image():
     print(user.current_images)
     shared.db.session.commit()
     return jsonify({'status': 'deleted'})
+
+
 from custom_image_recuperation import safe_name
-@managing.route('/upload-images', methods=['POST'])
+@managing.route('/upload-all_images', methods=['POST'])
 def upload_images():
     user = User.query.get(current_user.id)
-    uploaded_files = request.files.getlist("images[]")
+    uploaded_files = request.files.getlist("all_images[]")
     for file in uploaded_files:
         safe_image_name = safe_name("upload_"+file.filename, user.id)
-        file.save(os.path.join(managing.static_folder, 'images', safe_image_name))
+        file.save(os.path.join(managing.static_folder, 'all_images', safe_image_name))
         print(file.filename)
         if  user.current_images == "":
             user.current_images = safe_image_name

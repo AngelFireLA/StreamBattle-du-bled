@@ -53,7 +53,7 @@
       <input type="hidden" name="non_winner" id="non_winner">
       {% for image in pair %}
         <div class="image-container" onclick="selectWinner('{{ image }}', '{{ pair | reject('equalto', image) | first }}')">
-          <img src="{{ url_for('static', filename='images/' + image) }}" alt="Image">
+          <img src="{{ url_for('static', filename='all_images/' + image) }}" alt="Image">
         </div>
       {% endfor %}
     </form>

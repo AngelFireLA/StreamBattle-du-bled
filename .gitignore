@@ -4,6 +4,9 @@
 test.py
 /static/deleted
 keep/
-/static/images
+/static/all_images
 /static/tournaments
+*.pyc
+/static/tierlists
+*.db
 *.pyc

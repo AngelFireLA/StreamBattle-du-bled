@@ -24,10 +24,11 @@ from class_utils import User
 
 custom_image_recuperation = Blueprint('custom_image_recuperation', __name__, static_folder="static", template_folder="templates")
 
-count_by_images = True  # if instagram image downloader downloads posts or individual images
+count_by_images = True  # if instagram image downloader downloads posts or individual all_images
 
 
 def download_instagram_images(username, max_images=None):
+
     loader = instaloader.Instaloader(download_comments=False,
                                      download_videos=False,
                                      download_video_thumbnails=False,
@@ -35,10 +36,11 @@ def download_instagram_images(username, max_images=None):
                                      save_metadata=False,
                                      post_metadata_txt_pattern='',
                                      filename_pattern='{date_utc}_UTC')
+
     try:
         p = instaloader.Profile.from_username(loader.context, username)
     except instaloader.exceptions.ConnectionException:
-        flash("Profile privée ou pas d'images sur le compte")
+        flash("Profile privée ou pas d'all_images sur le compte")
     image_count = 0
 
     for post in p.get_posts():
@@ -51,7 +53,7 @@ def download_instagram_images(username, max_images=None):
                 if max_images is not None and image_count >= max_images:
                     break
     if count_by_images:
-        # Clean-up: Remove images that don't end with UTC or UTC_1
+        # Clean-up: Remove all_images that don't end with UTC or UTC_1
         for image_file in os.listdir(username):
             if not re.search(r'UTC(_1)?\.(jpg|jpeg|png)$', image_file):
                 os.remove(os.path.join(username, image_file))
@@ -59,11 +61,11 @@ def download_instagram_images(username, max_images=None):
 
 def download_bing_images(search_term, number_of_images, download_path=''):
     """
-    Downloads a specified number of images using Bing Image Downloader.
+    Downloads a specified number of all_images using Bing Image Downloader.
 
-    :param search_term: The search term for the images you want to download.
-    :param number_of_images: The number of images to download.
-    :param download_path: The directory path where the images will be saved. Defaults to 'downloaded_images'.
+    :param search_term: The search term for the all_images you want to download.
+    :param number_of_images: The number of all_images to download.
+    :param download_path: The directory path where the all_images will be saved. Defaults to 'downloaded_images'.
     """
     downloader.download(search_term, limit=number_of_images, output_dir=download_path)
 
@@ -82,17 +84,17 @@ def download_instagram_images_route():
     if max_images == 69:
         print("downloading every image")
         max_images = None
-    # Use the download_images function to download images
+    # Use the download_images function to download all_images
     download_instagram_images(username, max_images)
     ""
 
-    # The path where downloaded images are stored
+    # The path where downloaded all_images are stored
     instagram_folder_path = os.path.join(os.getcwd(), username)
 
-    # Target path to move images to
-    target_folder_path = os.path.join(custom_image_recuperation.static_folder, 'images')
+    # Target path to move all_images to
+    target_folder_path = os.path.join(custom_image_recuperation.static_folder, 'all_images')
     user = User.query.get(current_user.id)
-    # Moving the images to the 'images' folder
+    # Moving the all_images to the 'all_images' folder
     for image_file in os.listdir(instagram_folder_path):
 
         source_path = os.path.join(instagram_folder_path, image_file)
@@ -206,7 +208,7 @@ def download_mal_images(username, max_images=None):
 
         safe_image_name = safe_name(image_name, "mal")
         print(image_name, safe_image_name)
-        save_path = os.path.join(custom_image_recuperation.static_folder, "images", safe_image_name)
+        save_path = os.path.join(custom_image_recuperation.static_folder, "all_images", safe_image_name)
 
         image_object.save(save_path)
         if user.current_images:
@@ -221,7 +223,7 @@ def download_mal_images_route():
     if max_images == 69:
         print("downloading every image")
         max_images = None
-    # Use the download_images function to download images
+    # Use the download_images function to download all_images
     download_mal_images(username, max_images)
 
     return jsonify({'status': 'downloaded'})
@@ -232,7 +234,7 @@ def download_bing_images_route():
     keywords = request.form['keywords']
     max_images = int(request.form['count'])
 
-    target_folder_path = os.path.join(custom_image_recuperation.static_folder, 'images')
+    target_folder_path = os.path.join(custom_image_recuperation.static_folder, 'all_images')
 
     download_bing_images(keywords, max_images, target_folder_path)
     bing_folder_path = os.path.join(target_folder_path, keywords)

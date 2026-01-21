@@ -17,7 +17,7 @@ from class_utils import Pack
 from class_utils import User
 
 packs_management = Blueprint("packs_management", __name__, static_folder="static", template_folder="templates")
-images_dir = os.path.join(packs_management.static_folder, 'images')
+images_dir = os.path.join(packs_management.static_folder, 'all_images')
 
 
 def get_user_packs(user_id):
@@ -29,7 +29,7 @@ def get_user_packs(user_id):
             "name": pack.name,
             "category": pack.categories,
             "preview": pack.preview,
-            "images": ast.literal_eval(pack.images),
+            "all_images": ast.literal_eval(pack.images),
             "private": pack.private,
         }
         packs.append(pack_dict)
@@ -46,7 +46,7 @@ def get_all_packs():
             "name": pack.name,
             "category": pack.categories,
             "preview": pack.preview,
-            "images": ast.literal_eval(pack.images),
+            "all_images": ast.literal_eval(pack.images),
             "private": pack.private,
         }
         image_packs.append(pack_dict)
@@ -76,7 +76,7 @@ def store():
             "name": pack.name,
             "category": pack.categories,
             "preview": pack.preview,
-            "images": ast.literal_eval(pack.images),
+            "all_images": ast.literal_eval(pack.images),
             "private": pack.private,
             "user_id": str(user.id),
             "username": user.username,
@@ -109,7 +109,7 @@ def add_pack():
     pack = convert_pack_to_dict(Pack.query.get(pack_id))
     if pack:
         user = User.query.get(current_user.id)
-        image_paths = ','.join([image for image in pack["images"]])
+        image_paths = ','.join([image for image in pack["all_images"]])
         if user.current_images:
             user.current_images += ',' + image_paths
         else:
@@ -128,7 +128,7 @@ def convert_pack_to_dict(pack: Pack):
         "name": pack.name,
         "category": pack.categories,
         "preview": pack.preview,
-        "images": ast.literal_eval(pack.images),
+        "all_images": ast.literal_eval(pack.images),
         "private": pack.private,
     }
     return pack_dict
@@ -165,7 +165,7 @@ def create_pack():
 
         is_private = bool(is_private)
 
-        # Create the Pack object without the images first
+        # Create the Pack object without the all_images first
         new_pack = Pack(
             name=pack_name,
             categories=pack_category,
@@ -194,7 +194,7 @@ def create_pack():
         preview_filename = save_image(pack_preview)
         new_pack.preview = preview_filename
 
-        # Save the pack images
+        # Save the pack all_images
         image_filenames = []
         if pack_images:
             for image in pack_images:
@@ -202,7 +202,7 @@ def create_pack():
                 image_filenames.append(image_filename)
             new_pack.images = str(image_filenames)
         else:
-            flash('No images provided for the pack', 'error')
+            flash('No all_images provided for the pack', 'error')
             return render_template('packs_management/create_pack.html', form=form)
         shared.db.session.add(new_pack)
         # Commit the updates to the Pack object

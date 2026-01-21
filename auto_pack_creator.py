@@ -9,7 +9,7 @@ import sqlite3
 #     name=pack_name,
 #     categories=pack_category,
 #     preview='',  # Temporarily empty
-#     images='',  # Temporarily empty
+#     all_images='',  # Temporarily empty
 #     user_id=current_user.id,
 #     private=is_private,
 #     authorized_users=str(authorized_users_ids)

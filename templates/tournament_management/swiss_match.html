@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Swiss Tournament - Match</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(to right, skyblue, blue);
+    }
+    .image-container {
+      margin: 10px;
+      border: 2px solid transparent;
+      transition: all .3s ease;
+      display: inline-flex;
+      justify-content: center;
+      width: calc(49% - 20px);
+    }
+    .image-container:hover {
+      border-color: gold;
+    }
+    img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      cursor: pointer;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, .5);
+    }
+    .container {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: nowrap;
+      align-items: center;
+      margin: auto;
+    }
+    #match-form {
+      width: 100%;
+      text-align: center;
+    }
+    .bye-message {
+      text-align: center;
+      color: white;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Swiss Tournament</h1>
+  <h2>Round {{ round_number }}</h2>
+  <div class="container">
+    <form method="POST" id="match-form">
+      <input type="hidden" name="winner" id="winner">
+      {% if match.participant2 %}
+        <!-- Match with two participants -->
+        <div class="image-container" onclick="selectWinner('{{ match.participant1 }}')">
+          <img src="{{ url_for('static', filename='all_images/' + match.participant1) }}" alt="Image">
+        </div>
+        <div class="image-container" onclick="selectWinner('{{ match.participant2 }}')">
+          <img src="{{ url_for('static', filename='all_images/' + match.participant2) }}" alt="Image">
+        </div>
+      {% else %}
+        <!-- Bye round -->
+        <div class="image-container" onclick="selectWinner('{{ match.participant1 }}')">
+          <img src="{{ url_for('static', filename='all_images/' + match.participant1) }}" alt="Image">
+        </div>
+        <p class="bye-message">{{ match.participant1 }} gets a bye this round.</p>
+        <!-- Optionally, add a "Continue" button -->
+        <!--
+        <button type="button" class="btn btn-primary" onclick="selectWinner('{{ match.participant1 }}')">Continue</button>
+        -->
+      {% endif %}
+    </form>
+  </div>
+
+  <script>
+    function selectWinner(winner) {
+      document.getElementById('winner').value = winner;
+      document.getElementById('match-form').submit();
+    }
+  </script>
+</body>
+</html>

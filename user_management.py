@@ -140,7 +140,7 @@ def show_user_profile(user_id):
             "name": pack.name,
             "category": pack.categories,
             "preview": pack.preview,
-            "images": pack.images,
+            "all_images": pack.images,
             "private": pack.private,
         }
         packs.append(pack_dict)

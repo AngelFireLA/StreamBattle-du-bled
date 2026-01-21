@@ -51,8 +51,8 @@ app.register_blueprint(custom_image_recuperation, url_prefix="")
 with app.app_context():
     shared.db.create_all()
 
-if not os.path.exists(os.path.join(tournament_management.static_folder, 'images')):
-    os.makedirs(os.path.join(tournament_management.static_folder, 'images'))
+if not os.path.exists(os.path.join(tournament_management.static_folder, 'all_images')):
+    os.makedirs(os.path.join(tournament_management.static_folder, 'all_images'))
 
 
 @app.route('/', methods=['GET'])
@@ -65,22 +65,22 @@ from tournament_management import user_images_to_list
 def cleanup_unused_images():
     referenced_images = set()
 
-    # Collect all images referenced in the Pack.images
+    # Collect all all_images referenced in the Pack.all_images
     packs = Pack.query.all()
     for pack in packs:
         if pack.images:
             pack_images = ast.literal_eval(pack.images)
             referenced_images.update(pack_images)
 
-    # Collect all images referenced in User.current_images
+    # Collect all all_images referenced in User.current_images
     users = User.query.all()
     for user in users:
         if user.current_images:
             user_images = user_images_to_list(user.current_images)
             referenced_images.update(user_images)
 
-    # Directory containing all images
-    images_dir = os.path.join(app.static_folder, 'images')
+    # Directory containing all all_images
+    images_dir = os.path.join(app.static_folder, 'all_images')
     for filename in os.listdir(images_dir):
         file_path = os.path.join(images_dir, filename)
         if filename not in referenced_images:
@@ -90,7 +90,7 @@ def cleanup_unused_images():
 # You might want to call this function from a route or a command
 @app.cli.command("cleanup_images")
 def cleanup_images_command():
-    """CLI command to clean up unused images."""
+    """CLI command to clean up unused all_images."""
     cleanup_unused_images()
     print("Cleanup complete.")
 
@@ -98,7 +98,7 @@ def cleanup_images_command():
 def delete_pack_command():
     pack_id = int(input("Enter the ID of the pack to delete: "))
     pack = Pack.query.get(pack_id)
-    images_dir = os.path.join(app.static_folder, 'images')
+    images_dir = os.path.join(app.static_folder, 'all_images')
     for image in os.listdir(images_dir):
         if image.startswith(f"{pack_id}_"):
             os.remove(os.path.join(images_dir, image))
